@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  build-and-test:
+  restore:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,14 +18,62 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/.config/dotnet-tools.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore tools
         run: dotnet tool restore
 
-      - name: Restore
+      - name: Restore solution
         run: dotnet restore newbie-coder-api.sln
 
-      - name: Build
+  build:
+    runs-on: ubuntu-latest
+    needs: [restore]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/.config/dotnet-tools.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Build (Release)
         run: dotnet build newbie-coder-api.sln --configuration Release --no-restore
+
+  test:
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/.config/dotnet-tools.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
       - name: Test
         run: dotnet test newbie-coder-api.sln --configuration Release --no-build --verbosity normal
