@@ -87,5 +87,5 @@ jobs:
       - name: Restore solution
         run: dotnet restore newbie-coder-api.sln
 
-      - name: Test
-        run: dotnet test newbie-coder-api.sln --configuration Release --no-build --verbosity normal
+      - name: Test project
+        run: dotnet test NewbieCoder.UnitTest/NewbieCoder.UnitTest.csproj --configuration Release --no-restore --verbosity normal
