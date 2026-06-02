@@ -52,6 +52,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Restore solution
+        run: dotnet restore newbie-coder-api.sln
+
       - name: Build (Release)
         run: dotnet build newbie-coder-api.sln --configuration Release --no-restore
 
@@ -74,6 +80,12 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/.config/dotnet-tools.json') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Restore solution
+        run: dotnet restore newbie-coder-api.sln
 
       - name: Test
         run: dotnet test newbie-coder-api.sln --configuration Release --no-build --verbosity normal
