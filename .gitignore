@@ -1,0 +1,42 @@
+## Build
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+
+## Rider
+.idea/
+
+## NuGet
+*.nupkg
+**/packages/*
+!**/packages/build/
+
+## Test / coverage
+[Tt]est[Rr]esult*/
+[Cc]overage*/
+*.coverage
+*.coveragexml
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Secrets
+appsettings.*.local.json
+secrets.json
+.env
+.env.*
+
+## VS Code (giữ launch.json/tasks.json trong repo)
+# .vscode/
+
+## Docker
+**/obj/Docker/

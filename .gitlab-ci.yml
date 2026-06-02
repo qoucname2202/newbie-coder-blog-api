@@ -1,0 +1,33 @@
+# GitLab CI/CD — tự chạy khi push code hoặc tạo Merge Request
+# Pipeline: https://gitlab.com/codehub2026/newbie-coder-blog-api/-/pipelines
+
+image: mcr.microsoft.com/dotnet/sdk:8.0
+
+stages:
+  - build
+  - test
+
+variables:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  DOTNET_NOLOGO: "true"
+  Solution: "newbie-coder-api.sln"
+  Configuration: "Release"
+
+build:
+  stage: build
+  script:
+    - dotnet tool restore
+    - dotnet restore $Solution
+    - dotnet build $Solution --configuration $Configuration --no-restore
+  artifacts:
+    paths:
+      - "**/bin/$Configuration/"
+      - "**/obj/$Configuration/"
+    expire_in: 1 day
+
+test:
+  stage: test
+  needs: ["build"]
+  script:
+    - dotnet test $Solution --configuration $Configuration --no-build --verbosity normal

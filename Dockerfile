@@ -1,0 +1,23 @@
+# Build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+COPY newbie-coder-api.sln ./
+COPY NewbieCoder.Core/NewbieCoder.Core.csproj NewbieCoder.Core/
+COPY NewbieCoder.Infrastructure/NewbieCoder.Infrastructure.csproj NewbieCoder.Infrastructure/
+COPY NewbieCoder.API/NewbieCoder.API.csproj NewbieCoder.API/
+
+RUN dotnet restore NewbieCoder.API/NewbieCoder.API.csproj
+
+COPY . .
+RUN dotnet publish NewbieCoder.API/NewbieCoder.API.csproj -c Release -o /app/publish --no-restore
+
+# Run
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "NewbieCoder.API.dll"]
