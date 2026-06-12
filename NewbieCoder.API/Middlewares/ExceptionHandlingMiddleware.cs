@@ -1,5 +1,5 @@
-using System.Net;
 using System.Text.Json;
+using NewbieCoder.Core.Constants;
 using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.ViewModels;
 
@@ -9,22 +9,27 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 {
     public async Task InvokeAsync(HttpContext context)
     {
+        var requestTrace = context.TraceIdentifier;
         try
         {
             await next(context);
         }
         catch (Exception ex)
         {
-            await HandleExceptionAsync(context, ex, logger);
+            await HandleExceptionAsync(context, ex, logger, requestTrace);
         }
     }
 
-    private static async Task HandleExceptionAsync(HttpContext context, Exception exception, ILogger logger)
+    private static async Task HandleExceptionAsync(
+        HttpContext context,
+        Exception exception,
+        ILogger logger,
+        string requestTrace)
     {
-        var statusCode = exception switch
+        var (statusCode, responseCode, responseMessage) = exception switch
         {
-            BusinessException business => business.StatusCode,
-            _ => (int)HttpStatusCode.InternalServerError
+            BusinessException bex => (bex.StatusCode, bex.ResponseCode, bex.Message),
+            _ => (500, ResponseCodes.InternalError, "Internal Server Error")
         };
 
         if (statusCode >= 500)
@@ -33,7 +38,17 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = statusCode;
 
-        var response = ApiResponse<object>.Fail(exception.Message);
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        var response = ApiResponse<object>.Error(
+            requestTrace,
+            responseCode,
+            responseMessage,
+            tracingMessage: exception.Message);
+
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
     }
 }

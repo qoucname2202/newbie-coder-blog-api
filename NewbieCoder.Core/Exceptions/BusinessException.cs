@@ -1,12 +1,14 @@
+using NewbieCoder.Core.Constants;
+
 namespace NewbieCoder.Core.Exceptions;
 
 public class BusinessException : Exception
 {
     public int StatusCode { get; }
-
-    public BusinessException(string message, int statusCode = 400)
-        : base(message)
+    public string ResponseCode { get; }
+    public BusinessException(string message, string responseCode = ResponseCodes.BadRequest, int statusCode = 400) : base(message)
     {
         StatusCode = statusCode;
+        ResponseCode = responseCode;
     }
 }
