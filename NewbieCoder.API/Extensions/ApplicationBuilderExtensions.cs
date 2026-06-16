@@ -6,6 +6,8 @@ public static class ApplicationBuilderExtensions
 {
     public static WebApplication UseApiPipeline(this WebApplication app)
     {
+        app.UseMiddleware<RequestTraceMiddleware>();
+        app.UseRateLimiter();
         app.UseMiddleware<ExceptionHandlingMiddleware>();
 
         if (app.Environment.IsDevelopment())
@@ -16,7 +18,8 @@ public static class ApplicationBuilderExtensions
 
         app.UseHttpsRedirection();
         app.UseAuthorization();
-        app.MapControllers();
+        app.MapControllers()
+            .RequireRateLimiting(RateLimitingExtensions.DefaultPolicyName);
         app.MapHealthChecks("/health");
 
         return app;

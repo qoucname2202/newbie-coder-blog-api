@@ -146,9 +146,14 @@ Thử endpoint **GET /api/Health** → phản hồi JSON dạng:
 
 ```json
 {
-  "success": true,
-  "message": "API is running",
-  "data": "OK"
+  "requestTrace": "...",
+  "responseDateTime": "2026-06-12T22:22:05+07:00",
+  "responseData": "OK",
+  "responseStatus": {
+    "responseCode": "000000",
+    "responseMessage": "Success",
+    "tracingMessage": null
+  }
 }
 ```
 

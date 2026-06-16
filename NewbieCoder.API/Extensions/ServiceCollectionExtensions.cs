@@ -17,6 +17,8 @@ public static class ServiceCollectionExtensions
                 .AddSqlServer(connectionString, name: "sqlserver", timeout: TimeSpan.FromSeconds(5));
         }
 
+        services.AddHttpContextAccessor();
+        services.AddApiRateLimiting(configuration);
         services.AddControllers();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
