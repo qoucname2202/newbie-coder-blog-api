@@ -11,11 +11,7 @@ public static class ServiceCollectionExtensions
         services.AddInfrastructure(configuration);
 
         var connectionString = configuration.GetConnectionString("DefaultConnection");
-        if (!string.IsNullOrWhiteSpace(connectionString))
-        {
-            services.AddHealthChecks()
-                .AddSqlServer(connectionString, name: "sqlserver", timeout: TimeSpan.FromSeconds(5));
-        }
+        
 
         services.AddHttpContextAccessor();
         services.AddApiRateLimiting(configuration);
