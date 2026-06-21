@@ -18,5 +18,10 @@ namespace NewbieCoder.Core.Entities
         public int VoteScore { get; set; }
         public int BookmarkCount { get; set; }
         public DateTimeOffset? PublishedAt { get; set; }
+
+        public User Author { get; set; } = null!;
+        public PostCategory? Category { get; set; }
+        public ICollection<PostTag> PostTags { get; set; } = new List<PostTag>();
+        public ICollection<SeriesPost> SeriesPosts { get; set; } = new List<SeriesPost>();
     }
 }

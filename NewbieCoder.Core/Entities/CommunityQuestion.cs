@@ -15,5 +15,10 @@ namespace NewbieCoder.Core.Entities
         public int VoteScore { get; set; }
         public int BookmarkCount { get; set; }
         public DateTimeOffset? ClosedAt { get; set; }
+
+        public User Author { get; set; } = null!;
+        public CommunityAnswer? AcceptedAnswer { get; set; }
+        public ICollection<CommunityAnswer> Answers { get; set; } = new List<CommunityAnswer>();
+        public ICollection<CommunityQuestionTag> CommunityQuestionTags { get; set; } = new List<CommunityQuestionTag>();
     }
 }

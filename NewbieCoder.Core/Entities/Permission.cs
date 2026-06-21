@@ -10,5 +10,7 @@ namespace NewbieCoder.Core.Entities
         public string Action { get; set; } = null!;
         public string? Description { get; set; }
         public string Status { get; set; } = "ACT";
+
+        public ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
     }
 }

@@ -1,9 +1,8 @@
 ﻿using System.Net;
 namespace NewbieCoder.Core.Entities
 {
-    public class LoginHistory
+    public class LoginHistory : BaseEntity
     {
-        public long Id { get; set; }
         public long? UserId { get; set; }
         public string? Email { get; set; }
         public long? DeviceId { get; set; }
@@ -12,7 +11,10 @@ namespace NewbieCoder.Core.Entities
         public string? UserAgent { get; set; }
         public string LoginStatus { get; set; } = null!;
         public string? FailureReason { get; set; }
-        public DateTimeOffset EffDate { get; set; }
-        public DateTimeOffset DateLastMaint { get; set; }
+
+        public User? User { get; set; }
+        public UserDevice? Device { get; set; }
+        public UserSession? Session { get; set; }
+
     }
 }

@@ -13,5 +13,8 @@ namespace NewbieCoder.Core.Entities
         public int ViewCount { get; set; }
         public int BookmarkCount { get; set; }
         public DateTimeOffset? PublishedAt { get; set; }
+
+        public User Author { get; set; } = null!;
+        public ICollection<SeriesPost> SeriesPosts { get; set; } = new List<SeriesPost>();
     }
 }

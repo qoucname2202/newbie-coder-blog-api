@@ -12,5 +12,7 @@ namespace NewbieCoder.Core.Entities
         public DateTimeOffset ExpiredAt { get; set; }
         public DateTimeOffset? UsedAt { get; set; }
         public DateTimeOffset? RevokedAt { get; set; }
+
+        public User User { get; set; } = null!;
     }
 }

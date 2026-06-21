@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NewbieCoder.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260619074732_first-test-database")]
-    partial class firsttestdatabase
+    [Migration("20260621063629_test-database")]
+    partial class testdatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -29,7 +29,8 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
@@ -43,7 +44,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("content");
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -94,7 +95,8 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
@@ -128,7 +130,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("content");
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -156,9 +158,9 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasDefaultValue("OPEN")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("open")
                         .HasColumnName("status");
 
                     b.Property<string>("Title")
@@ -191,7 +193,12 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.ToTable("community_questions", (string)null);
+                    b.HasIndex("Status");
+
+                    b.ToTable("community_questions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_cq_status", "status IN ('open','answered','resolved','closed','hidden')");
+                        });
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.CommunityQuestionTag", b =>
@@ -221,7 +228,8 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
@@ -231,7 +239,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("answer_content");
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -282,7 +290,8 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
@@ -297,7 +306,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("bookmark_count");
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -318,8 +327,8 @@ namespace NewbieCoder.Infrastructure.Migrations
 
                     b.Property<string>("Level")
                         .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
                         .HasColumnName("level");
 
                     b.Property<DateTimeOffset?>("PublishedAt")
@@ -340,9 +349,9 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasDefaultValue("DRAFT")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("draft")
                         .HasColumnName("status");
 
                     b.Property<string>("Title")
@@ -375,10 +384,19 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.HasIndex("DeletedAt")
                         .HasFilter("deleted_at IS NULL");
 
+                    b.HasIndex("Level");
+
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.ToTable("interview_questions", (string)null);
+                    b.HasIndex("Status");
+
+                    b.ToTable("interview_questions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_iq_level", "level IN ('entry','junior','middle','senior','expert')");
+
+                            t.HasCheckConstraint("ck_iq_status", "status IN ('draft','pending','published','rejected','hidden','deleted')");
+                        });
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.InterviewQuestionTag", b =>
@@ -408,109 +426,190 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_last_maint")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<long?>("DeletedBy")
+                        .HasColumnType("bigint")
+                        .HasColumnName("deleted_by");
 
                     b.Property<long?>("DeviceId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("device_id");
 
                     b.Property<DateTimeOffset>("EffDate")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eff_date")
+                        .HasDefaultValueSql("date_trunc('day', now())");
 
                     b.Property<string>("Email")
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("email");
 
                     b.Property<string>("FailureReason")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("failure_reason");
 
                     b.Property<string>("IpAddress")
-                        .HasColumnType("text");
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)")
+                        .HasColumnName("ip_address");
 
                     b.Property<string>("LoginStatus")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("login_status");
 
                     b.Property<long?>("SessionId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("session_id");
 
                     b.Property<string>("UserAgent")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("user_agent");
 
                     b.Property<long?>("UserId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
-                    b.ToTable("LoginHistories");
+                    b.HasIndex("DeletedAt")
+                        .HasFilter("deleted_at IS NULL");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("EffDate");
+
+                    b.HasIndex("LoginStatus");
+
+                    b.HasIndex("SessionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("login_histories", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_login_histories_status", "login_status IN ('success','failed')");
+                        });
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.PasswordResetToken", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_last_maint")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
 
                     b.Property<long?>("DeletedBy")
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("deleted_by");
 
                     b.Property<DateTimeOffset>("EffDate")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eff_date")
+                        .HasDefaultValueSql("date_trunc('day', now())");
 
                     b.Property<DateTimeOffset>("ExpiredAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expired_at");
 
                     b.Property<string>("RequestedIp")
-                        .HasColumnType("text");
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)")
+                        .HasColumnName("requested_ip");
 
                     b.Property<string>("RequestedUserAgent")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("requested_user_agent");
 
                     b.Property<DateTimeOffset?>("RevokedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("active")
+                        .HasColumnName("status");
 
                     b.Property<string>("TokenHash")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("token_hash");
 
                     b.Property<DateTimeOffset?>("UsedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
 
                     b.Property<long>("UserId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
-                    b.ToTable("PasswordResetTokens");
+                    b.HasIndex("DeletedAt")
+                        .HasFilter("deleted_at IS NULL");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("password_reset_tokens", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_prt_status", "status IN ('active','used','expired','revoked')");
+                        });
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.Permission", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Action")
                         .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("action");
 
                     b.Property<string>("Code")
@@ -520,7 +619,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("code");
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -559,8 +658,8 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasDefaultValue("ACT")
                         .HasColumnName("status");
 
@@ -574,6 +673,8 @@ namespace NewbieCoder.Infrastructure.Migrations
 
                     b.HasIndex("Module");
 
+                    b.HasIndex("Status");
+
                     b.ToTable("permissions", null, t =>
                         {
                             t.HasCheckConstraint("ck_permissions_action", "action IN ('VIEW','INIT','EDIT','DEL','APPR','RJCT','ASIG')");
@@ -586,7 +687,8 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
@@ -616,7 +718,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("content");
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -648,9 +750,9 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasDefaultValue("DRAFT")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("draft")
                         .HasColumnName("status");
 
                     b.Property<string>("Summary")
@@ -676,9 +778,9 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.Property<string>("Visibility")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)")
-                        .HasDefaultValue("PUBLIC")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("public")
                         .HasColumnName("visibility");
 
                     b.Property<int>("VoteScore")
@@ -699,17 +801,19 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
+                    b.HasIndex("Status");
+
                     b.ToTable("posts", null, t =>
                         {
                             t.HasCheckConstraint("ck_posts_bookmark_cnt", "bookmark_count >= 0");
 
                             t.HasCheckConstraint("ck_posts_comment_cnt", "comment_count >= 0");
 
-                            t.HasCheckConstraint("ck_posts_status", "status IN ('DRAFT','PENDING','PUB','RJCT','HIDDEN','DEL')");
+                            t.HasCheckConstraint("ck_posts_status", "status IN ('draft','pending','published','rejected','hidden','deleted')");
 
                             t.HasCheckConstraint("ck_posts_view_cnt", "view_count >= 0");
 
-                            t.HasCheckConstraint("ck_posts_visibility", "visibility IN ('PUBLIC','PRIVATE','LINK')");
+                            t.HasCheckConstraint("ck_posts_visibility", "visibility IN ('public','private','link_only')");
                         });
                 });
 
@@ -717,12 +821,13 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -764,9 +869,9 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasDefaultValue("ACT")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("active")
                         .HasColumnName("status");
 
                     b.HasKey("Id");
@@ -781,7 +886,7 @@ namespace NewbieCoder.Infrastructure.Migrations
 
                     b.ToTable("post_categories", null, t =>
                         {
-                            t.HasCheckConstraint("ck_post_cat_status", "status IN ('ACT','INACT')");
+                            t.HasCheckConstraint("ck_post_cat_status", "status IN ('active','inactive')");
                         });
                 });
 
@@ -812,64 +917,109 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_last_maint")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
 
                     b.Property<long?>("DeletedBy")
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("deleted_by");
 
                     b.Property<DateTimeOffset>("EffDate")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eff_date")
+                        .HasDefaultValueSql("date_trunc('day', now())");
 
                     b.Property<DateTimeOffset>("ExpiredAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expired_at");
 
                     b.Property<DateTimeOffset>("IssuedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("issued_at")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<long?>("ReplacedByTokenId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("replaced_by_token_id");
 
                     b.Property<DateTimeOffset?>("RevokedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
 
                     b.Property<long>("SessionId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("session_id");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("active")
+                        .HasColumnName("status");
 
                     b.Property<Guid?>("TokenFamily")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("token_family");
 
                     b.Property<string>("TokenHash")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("token_hash");
 
                     b.Property<DateTimeOffset?>("UsedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
 
                     b.Property<long>("UserId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
-                    b.ToTable("RefreshTokens");
+                    b.HasIndex("DeletedAt")
+                        .HasFilter("deleted_at IS NULL");
+
+                    b.HasIndex("ReplacedByTokenId");
+
+                    b.HasIndex("SessionId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TokenFamily");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("refresh_tokens", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_refresh_tokens_status", "status IN ('active','used','revoked','expired')");
+                        });
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.Role", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
@@ -880,7 +1030,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("code");
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -919,9 +1069,9 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasDefaultValue("ACT")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("active")
                         .HasColumnName("status");
 
                     b.HasKey("Id");
@@ -932,9 +1082,11 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.HasIndex("DeletedAt")
                         .HasFilter("deleted_at IS NULL");
 
+                    b.HasIndex("Status");
+
                     b.ToTable("roles", null, t =>
                         {
-                            t.HasCheckConstraint("ck_roles_status", "status IN ('ACT','INACT')");
+                            t.HasCheckConstraint("ck_roles_status", "status IN ('active','inactive')");
                         });
                 });
 
@@ -942,7 +1094,8 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
@@ -951,7 +1104,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("created_by");
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -980,8 +1133,12 @@ namespace NewbieCoder.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedBy");
+
                     b.HasIndex("DeletedAt")
                         .HasFilter("deleted_at IS NULL");
+
+                    b.HasIndex("PermissionId");
 
                     b.HasIndex("RoleId", "PermissionId")
                         .IsUnique();
@@ -993,7 +1150,8 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
@@ -1008,7 +1166,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("bookmark_count");
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -1044,9 +1202,9 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasDefaultValue("DRAFT")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("draft")
                         .HasColumnName("status");
 
                     b.Property<string>("ThumbnailUrl")
@@ -1068,9 +1226,9 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.Property<string>("Visibility")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)")
-                        .HasDefaultValue("PUBLIC")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("public")
                         .HasColumnName("visibility");
 
                     b.HasKey("Id");
@@ -1083,7 +1241,14 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.ToTable("series", (string)null);
+                    b.HasIndex("Status");
+
+                    b.ToTable("series", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_series_status", "status IN ('draft','pending','published','rejected','hidden','deleted')");
+
+                            t.HasCheckConstraint("ck_series_visibility", "visibility IN ('public','private','link_only')");
+                        });
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.SeriesPost", b =>
@@ -1110,6 +1275,8 @@ namespace NewbieCoder.Infrastructure.Migrations
 
                     b.HasKey("SeriesId", "PostId");
 
+                    b.HasIndex("PostId");
+
                     b.HasIndex("SeriesId", "Position")
                         .IsUnique();
 
@@ -1120,12 +1287,13 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -1181,9 +1349,9 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasDefaultValue("ACT")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("active")
                         .HasColumnName("status");
 
                     b.HasKey("Id");
@@ -1194,6 +1362,8 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
+                    b.HasIndex("Status");
+
                     b.ToTable("tags", null, t =>
                         {
                             t.HasCheckConstraint("ck_tags_follow_cnt", "follower_count >= 0");
@@ -1202,7 +1372,7 @@ namespace NewbieCoder.Infrastructure.Migrations
 
                             t.HasCheckConstraint("ck_tags_q_cnt", "question_count >= 0");
 
-                            t.HasCheckConstraint("ck_tags_status", "status IN ('ACT','INACT')");
+                            t.HasCheckConstraint("ck_tags_status", "status IN ('active','inactive')");
                         });
                 });
 
@@ -1210,7 +1380,8 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
@@ -1230,7 +1401,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("cover_url");
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -1289,9 +1460,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("github_url");
 
                     b.Property<string>("LastKnownIp")
-                        .HasMaxLength(45)
-                        .HasColumnType("character varying(45)")
-                        .HasColumnName("last_known_ip");
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("LastLoginAt")
                         .HasColumnType("timestamp with time zone")
@@ -1301,6 +1470,12 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("linkedin_url");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("location");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -1337,8 +1512,12 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.HasIndex("DeletedAt")
                         .HasFilter("deleted_at IS NULL");
 
+                    b.HasIndex("DeletedBy");
+
                     b.HasIndex("Email")
                         .IsUnique();
+
+                    b.HasIndex("Status");
 
                     b.HasIndex("Username")
                         .IsUnique();
@@ -1363,65 +1542,110 @@ namespace NewbieCoder.Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Browser")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("browser");
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_last_maint")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
 
                     b.Property<long?>("DeletedBy")
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("deleted_by");
 
                     b.Property<string>("DeviceId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("device_id");
 
                     b.Property<string>("DeviceName")
-                        .HasColumnType("text");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("device_name");
 
                     b.Property<string>("DeviceType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("device_type");
 
                     b.Property<DateTimeOffset>("EffDate")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eff_date")
+                        .HasDefaultValueSql("date_trunc('day', now())");
 
                     b.Property<string>("IpAddress")
-                        .HasColumnType("text");
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)")
+                        .HasColumnName("ip_address");
 
                     b.Property<DateTimeOffset?>("LastLoginAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_at");
 
                     b.Property<string>("Os")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("os");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("active")
+                        .HasColumnName("status");
 
                     b.Property<string>("UserAgent")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("user_agent");
 
                     b.Property<long>("UserId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserDevices");
+                    b.HasIndex("DeletedAt")
+                        .HasFilter("deleted_at IS NULL");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "DeviceId")
+                        .IsUnique();
+
+                    b.ToTable("user_devices", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_user_devices_status", "status IN ('active','revoked','blocked')");
+
+                            t.HasCheckConstraint("ck_user_devices_type", "device_type IN ('web','mobile','tablet','desktop')");
+                        });
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.UserRole", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
@@ -1436,7 +1660,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("assigned_by");
 
                     b.Property<DateTimeOffset>("DateLastMaint")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_last_maint")
                         .HasDefaultValueSql("now()");
@@ -1466,10 +1690,113 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasDefaultValue("ACT")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("active")
                         .HasColumnName("status");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedBy");
+
+                    b.HasIndex("DeletedAt")
+                        .HasFilter("deleted_at IS NULL");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("user_roles", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_user_roles_status", "status IN ('active','revoked','expired')");
+                        });
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.UserSession", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("DateLastMaint")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_last_maint")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<long?>("DeletedBy")
+                        .HasColumnType("bigint")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<long?>("DeviceId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("device_id");
+
+                    b.Property<DateTimeOffset>("EffDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eff_date")
+                        .HasDefaultValueSql("date_trunc('day', now())");
+
+                    b.Property<DateTimeOffset>("ExpiredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expired_at");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)")
+                        .HasColumnName("ip_address");
+
+                    b.Property<DateTimeOffset?>("LastActiveAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_active_at");
+
+                    b.Property<DateTimeOffset>("LoginAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("login_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<string>("RevokedReason")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("revoked_reason");
+
+                    b.Property<string>("SessionTokenHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("session_token_hash");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("active")
+                        .HasColumnName("status");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("user_agent");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint")
@@ -1480,74 +1807,422 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.HasIndex("DeletedAt")
                         .HasFilter("deleted_at IS NULL");
 
-                    b.HasIndex("RoleId");
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("ExpiredAt");
+
+                    b.HasIndex("Status");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("user_roles", null, t =>
+                    b.ToTable("user_sessions", null, t =>
                         {
-                            t.HasCheckConstraint("ck_user_roles_status", "status IN ('ACT','RVKD','EXP')");
+                            t.HasCheckConstraint("ck_user_sessions_status", "status IN ('active','expired','revoked')");
                         });
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.CommunityAnswer", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.User", "Author")
+                        .WithMany("CommunityAnswers")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NewbieCoder.Core.Entities.CommunityQuestion", "Question")
+                        .WithMany("Answers")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.CommunityQuestion", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.CommunityAnswer", "AcceptedAnswer")
+                        .WithMany()
+                        .HasForeignKey("AcceptedAnswerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("NewbieCoder.Core.Entities.User", "Author")
+                        .WithMany("CommunityQuestions")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AcceptedAnswer");
+
+                    b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.CommunityQuestionTag", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.CommunityQuestion", "Question")
+                        .WithMany("CommunityQuestionTags")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NewbieCoder.Core.Entities.Tag", "Tag")
+                        .WithMany("CommunityQuestionTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+
+                    b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.InterviewAnswer", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.InterviewQuestion", "Question")
+                        .WithMany("Answers")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.InterviewQuestion", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.InterviewQuestionTag", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.InterviewQuestion", "Question")
+                        .WithMany("InterviewQuestionTags")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NewbieCoder.Core.Entities.Tag", "Tag")
+                        .WithMany("InterviewQuestionTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+
+                    b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.LoginHistory", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.UserDevice", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("NewbieCoder.Core.Entities.UserSession", "Session")
+                        .WithMany()
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("NewbieCoder.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Device");
+
+                    b.Navigation("Session");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.PasswordResetToken", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.Post", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.User", "Author")
+                        .WithMany("Posts")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NewbieCoder.Core.Entities.PostCategory", "Category")
+                        .WithMany("Posts")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.PostCategory", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.PostCategory", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.PostTag", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.Post", "Post")
+                        .WithMany("PostTags")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NewbieCoder.Core.Entities.Tag", "Tag")
+                        .WithMany("PostTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.RefreshToken", "ReplacedByToken")
+                        .WithMany()
+                        .HasForeignKey("ReplacedByTokenId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("NewbieCoder.Core.Entities.UserSession", "Session")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NewbieCoder.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ReplacedByToken");
+
+                    b.Navigation("Session");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.RolePermission", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("NewbieCoder.Core.Entities.Permission", "Permission")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NewbieCoder.Core.Entities.Role", "Role")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.Series", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.User", "Author")
+                        .WithMany("Series")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.SeriesPost", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.Post", "Post")
+                        .WithMany("SeriesPosts")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NewbieCoder.Core.Entities.Series", "Series")
+                        .WithMany("SeriesPosts")
+                        .HasForeignKey("SeriesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Series");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.User", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.NoAction);
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.UserDevice", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.User", "User")
+                        .WithMany("Devices")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.UserRole", b =>
+                {
+                    b.HasOne("NewbieCoder.Core.Entities.User", "AssignedByUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedBy")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("NewbieCoder.Core.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NewbieCoder.Core.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AssignedByUser");
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.UserSession", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                    b.HasOne("NewbieCoder.Core.Entities.UserDevice", "Device")
+                        .WithMany("Sessions")
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    b.HasOne("NewbieCoder.Core.Entities.User", "User")
+                        .WithMany("Sessions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Property<DateTimeOffset>("DateLastMaint")
-                        .HasColumnType("timestamp with time zone");
+                    b.Navigation("Device");
 
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Navigation("User");
+                });
 
-                    b.Property<long?>("DeletedBy")
-                        .HasColumnType("bigint");
+            modelBuilder.Entity("NewbieCoder.Core.Entities.CommunityQuestion", b =>
+                {
+                    b.Navigation("Answers");
 
-                    b.Property<long?>("DeviceId")
-                        .HasColumnType("bigint");
+                    b.Navigation("CommunityQuestionTags");
+                });
 
-                    b.Property<DateTimeOffset>("EffDate")
-                        .HasColumnType("timestamp with time zone");
+            modelBuilder.Entity("NewbieCoder.Core.Entities.InterviewQuestion", b =>
+                {
+                    b.Navigation("Answers");
 
-                    b.Property<DateTimeOffset>("ExpiredAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Navigation("InterviewQuestionTags");
+                });
 
-                    b.Property<string>("IpAddress")
-                        .HasColumnType("text");
+            modelBuilder.Entity("NewbieCoder.Core.Entities.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
+                });
 
-                    b.Property<DateTimeOffset?>("LastActiveAt")
-                        .HasColumnType("timestamp with time zone");
+            modelBuilder.Entity("NewbieCoder.Core.Entities.Post", b =>
+                {
+                    b.Navigation("PostTags");
 
-                    b.Property<DateTimeOffset>("LoginAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Navigation("SeriesPosts");
+                });
 
-                    b.Property<DateTimeOffset?>("RevokedAt")
-                        .HasColumnType("timestamp with time zone");
+            modelBuilder.Entity("NewbieCoder.Core.Entities.PostCategory", b =>
+                {
+                    b.Navigation("Children");
 
-                    b.Property<string>("RevokedReason")
-                        .HasColumnType("text");
+                    b.Navigation("Posts");
+                });
 
-                    b.Property<string>("SessionTokenHash")
-                        .IsRequired()
-                        .HasColumnType("text");
+            modelBuilder.Entity("NewbieCoder.Core.Entities.Role", b =>
+                {
+                    b.Navigation("RolePermissions");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Navigation("UserRoles");
+                });
 
-                    b.Property<string>("UserAgent")
-                        .HasColumnType("text");
+            modelBuilder.Entity("NewbieCoder.Core.Entities.Series", b =>
+                {
+                    b.Navigation("SeriesPosts");
+                });
 
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
+            modelBuilder.Entity("NewbieCoder.Core.Entities.Tag", b =>
+                {
+                    b.Navigation("CommunityQuestionTags");
 
-                    b.HasKey("Id");
+                    b.Navigation("InterviewQuestionTags");
 
-                    b.ToTable("UserSessions");
+                    b.Navigation("PostTags");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.User", b =>
+                {
+                    b.Navigation("CommunityAnswers");
+
+                    b.Navigation("CommunityQuestions");
+
+                    b.Navigation("Devices");
+
+                    b.Navigation("Posts");
+
+                    b.Navigation("Series");
+
+                    b.Navigation("Sessions");
+
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.UserDevice", b =>
+                {
+                    b.Navigation("Sessions");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.UserSession", b =>
+                {
+                    b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618
         }

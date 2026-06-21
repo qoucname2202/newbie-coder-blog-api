@@ -9,5 +9,7 @@ namespace NewbieCoder.Core.Entities
         public string? Explanation { get; set; }
         public string? Example { get; set; }
         public bool IsOfficial { get; set; } = true;
+
+        public InterviewQuestion Question { get; set; } = null!;
     }
 }

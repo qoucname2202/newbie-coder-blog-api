@@ -14,5 +14,8 @@ namespace NewbieCoder.Core.Entities
         public int VoteScore { get; set; }
         public int BookmarkCount { get; set; }
         public DateTimeOffset? PublishedAt { get; set; }
+        public User? Author { get; set; }
+        public ICollection<InterviewAnswer> Answers { get; set; } = new List<InterviewAnswer>();
+        public ICollection<InterviewQuestionTag> InterviewQuestionTags { get; set; } = new List<InterviewQuestionTag>();
     }
 }

@@ -14,5 +14,8 @@ namespace NewbieCoder.Core.Entities
         public string? IpAddress { get; set; }
         public DateTimeOffset? LastLoginAt { get; set; }
         public string Status { get; set; } = "ACT";
+
+        public User User { get; set; } = null!;
+        public ICollection<UserSession> Sessions { get; set; } = new List<UserSession>();
     }
 }
