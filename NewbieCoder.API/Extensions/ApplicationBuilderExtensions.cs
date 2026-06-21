@@ -20,7 +20,7 @@ public static class ApplicationBuilderExtensions
         app.UseAuthorization();
         app.MapControllers()
             .RequireRateLimiting(RateLimitingExtensions.DefaultPolicyName);
-        app.MapHealthChecks("/health");
+       
 
         return app;
     }
