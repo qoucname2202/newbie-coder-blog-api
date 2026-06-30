@@ -21,8 +21,7 @@ namespace NewbieCoder.API.Controllers;
 [Tags("Authentication")]
 public sealed class AuthController(
     IAuthService authService,
-    AuthRateLimitService rateLimit,
-    IHttpContextAccessor httpContextAccessor)
+    AuthRateLimitService rateLimit)
     : ControllerBase
 {
     #region Login
@@ -32,6 +31,7 @@ public sealed class AuthController(
     /// Rate-limited per login_id (5 attempts/5 min) and per IP (10 attempts/5 min).
     /// </summary>
     /// <param name="request">login_id (email or username) + password + remember_me</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpPost("login")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<AuthTokenResponse>), StatusCodes.Status200OK)]
@@ -44,7 +44,7 @@ public sealed class AuthController(
         CancellationToken cancellationToken)
     {
         var trace = HttpContext.GetRequestTrace();
-        var ipAddress = GetClientIp();
+        var ipAddress = GetClientIp() ?? string.Empty;
         var loginId = request.LoginId?.Trim().ToLowerInvariant() ?? string.Empty;
 
         // Reject before touching the database if rate limit is exceeded.
