@@ -5,6 +5,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NewbieCoder.API.Controllers;
 using NewbieCoder.Core.Constants;
@@ -12,6 +14,7 @@ using NewbieCoder.Core.DTOs.Request.Auth;
 using NewbieCoder.Core.DTOs.Response.Auth;
 using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.Interfaces.Services;
+using NewbieCoder.Infrastructure.Data;
 using NewbieCoder.Infrastructure.Services;
 using Xunit;
 
@@ -38,11 +41,16 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
         };
     }
 
+    private void ResetRateLimit() => _factory.RateLimitService.Reset();
+    private void ResetLoginState() => _factory.ClearLoginState();
+
     #region Login Tests
 
     [Fact]
     public async Task Login_WithValidCredentials_Returns200AndTokens()
     {
+        ResetRateLimit();
+        ResetLoginState();
         // Arrange
         _factory.SetLoginResult(new AuthTokenResponse
         {
@@ -59,16 +67,19 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<ApiResponse<AuthTokenResponse>>(_jsonOptions);
+        var body = await response.Content.ReadFromJsonAsync<AuthTokenResponse>(_jsonOptions);
         Assert.NotNull(body);
-        Assert.Equal(ResponseCodes.Success, body.ResponseStatus.ResponseCode);
-        Assert.Equal("access-token-fake", body.ResponseData?.AccessToken);
-        Assert.Equal("refresh-token-jwt-fake", body.ResponseData?.RefreshTokenJwt);
+        Assert.Equal("access-token-fake", body.AccessToken);
+        Assert.Equal("refresh-token-jwt-fake", body.RefreshTokenJwt);
+        Assert.Equal("Bearer", body.TokenType);
+        Assert.Equal(900, body.ExpiresIn);
     }
 
     [Fact]
     public async Task Login_WithInvalidCredentials_Returns401()
     {
+        ResetRateLimit();
+        ResetLoginState();
         // Arrange
         _factory.SetLoginException(new BusinessException(
             ResponseMessages.InvalidCredentials,
@@ -90,6 +101,8 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
     [Fact]
     public async Task Login_WithBlockedUser_Returns403()
     {
+        ResetRateLimit();
+        ResetLoginState();
         // Arrange
         _factory.SetLoginException(new BusinessException(
             ResponseMessages.UserBlocked,
@@ -112,6 +125,8 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
     [Fact]
     public async Task Login_WithBlockedDevice_Returns403()
     {
+        ResetRateLimit();
+        ResetLoginState();
         // Arrange
         _factory.SetLoginException(new BusinessException(
             ResponseMessages.DeviceBlocked,
@@ -133,6 +148,8 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
     [Fact]
     public async Task Login_WithMissingLoginId_Returns400()
     {
+        ResetRateLimit();
+        ResetLoginState();
         // Arrange — model validation handles this at the action level.
         var request = new { Password = "Password@123" }; // login_id intentionally omitted
 
@@ -146,6 +163,8 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
     [Fact]
     public async Task Login_WithShortPassword_Returns400()
     {
+        ResetRateLimit();
+        ResetLoginState();
         // Arrange — password too short.
         var request = new { LoginId = "test@example.com", Password = "1234567" }; // 7 chars
 
@@ -159,6 +178,8 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
     [Fact]
     public async Task Login_WithRateLimitExceeded_Returns429()
     {
+        ResetRateLimit();
+        ResetLoginState();
         // Arrange
         _factory.SetRateLimitBlocked(true);
 
@@ -209,30 +230,27 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
 /// <summary>
 /// Custom WebApplicationFactory that replaces real services with in-memory test doubles.
 /// </summary>
-public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
+public sealed class AuthWebApplicationFactory : TestWebApplicationFactory
 {
     private readonly TestAuthService _authService = new();
-    private readonly TestRateLimitService _rateLimit = new();
-    private bool _rateLimitBlocked;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        base.ConfigureWebHost(builder);
+
         builder.ConfigureServices(services =>
         {
-            // Remove real registrations.
-            services.Remove(services.Single(sd => sd.ServiceType == typeof(IAuthService)));
-            services.Remove(services.Single(sd => sd.ServiceType == typeof(AuthRateLimitService)));
-
-            // Add test doubles.
-            services.AddSingleton(_authService);
-            services.AddSingleton(_rateLimit);
+            // Remove real IAuthService (both singleton and factory registrations).
+            var authDescriptors = services.Where(sd => sd.ServiceType == typeof(IAuthService)).ToList();
+            foreach (var d in authDescriptors) services.Remove(d);
+            services.AddSingleton<IAuthService>(_authService);
         });
     }
 
     // Helper methods to configure test doubles from test cases.
     internal void SetLoginResult(AuthTokenResponse response) => _authService.LoginResult = response;
     internal void SetLoginException(Exception ex) => _authService.LoginException = ex;
-    internal void SetRateLimitBlocked(bool blocked) => _rateLimitBlocked = blocked;
+    internal void ClearLoginState() => _authService.Reset();
 }
 
 /// <summary>
@@ -242,6 +260,12 @@ public sealed class TestAuthService : IAuthService
 {
     public AuthTokenResponse? LoginResult { get; set; }
     public Exception? LoginException { get; set; }
+
+    public void Reset()
+    {
+        LoginResult = null;
+        LoginException = null;
+    }
 
     public Task<AuthTokenResponse> LoginAsync(
         LoginRequest request, string? deviceId, string? deviceName,
@@ -290,26 +314,34 @@ public sealed class TestAuthService : IAuthService
 }
 
 /// <summary>
-/// In-memory test double for AuthRateLimitService.
+/// In-memory test double for IAuthRateLimitService.
 /// </summary>
-public sealed class TestRateLimitService : AuthRateLimitService
+public sealed class TestRateLimitService : IAuthRateLimitService
 {
     private bool _blocked;
 
     public void SetBlocked(bool blocked) => _blocked = blocked;
+    public void Reset() => _blocked = false;
 
-    public new bool IsBlocked(string loginId, string ipAddress) => _blocked;
-    public new void RecordFailedAttempt(string loginId, string ipAddress) { }
-    public new void ClearAttempts(string loginId, string ipAddress) { }
+    public bool IsBlocked(string loginId, string ipAddress) => _blocked;
+    public void RecordFailedAttempt(string loginId, string ipAddress) { }
+    public void ClearAttempts(string loginId, string ipAddress) { }
 }
 
 /// <summary>
-/// Minimal API response envelope used in tests.
+/// Minimal API response envelope used in tests (matches NewbieCoder.Core.ViewModels.ApiResponse<T>).
 /// </summary>
-public sealed class ApiResponse<T>
+public sealed class TestApiResponse<T>
 {
     public required string RequestTrace { get; init; }
     public required string ResponseDateTime { get; init; }
     public T? ResponseData { get; init; }
-    public required AuthErrorStatus ResponseStatus { get; init; }
+    public required TestResponseStatus ResponseStatus { get; init; }
+}
+
+public sealed class TestResponseStatus
+{
+    public required string ResponseCode { get; init; }
+    public required string ResponseMessage { get; init; }
+    public string? TracingMessage { get; init; }
 }

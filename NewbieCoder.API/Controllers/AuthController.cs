@@ -21,7 +21,7 @@ namespace NewbieCoder.API.Controllers;
 [Tags("Authentication")]
 public sealed class AuthController(
     IAuthService authService,
-    AuthRateLimitService rateLimit)
+    IAuthRateLimitService rateLimit)
     : ControllerBase
 {
     #region Login

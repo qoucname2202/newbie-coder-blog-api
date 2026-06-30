@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using NewbieCoder.Core.Interfaces.Services;
 
 namespace NewbieCoder.Infrastructure.Services;
 
@@ -6,7 +7,7 @@ namespace NewbieCoder.Infrastructure.Services;
 /// Tracks failed login attempts in memory to protect against brute-force attacks.
 /// Separate limits apply per login_id (5/5 min) and per IP address (10/5 min).
 /// </summary>
-public class AuthRateLimitService
+public class AuthRateLimitService : IAuthRateLimitService
 {
     private const int LoginIdMaxAttempts = 5;
     private const int IpMaxAttempts = 10;

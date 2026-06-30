@@ -22,7 +22,7 @@ public sealed partial class AuthService : IAuthService
 {
     private readonly AppDbContext _db;
     private readonly IPasswordHasherService _passwordHasher;
-    private readonly AuthRateLimitService _rateLimit;
+    private readonly IAuthRateLimitService _rateLimit;
     private readonly IAuditLogService _auditLog;
     private readonly JwtSecurityTokenHandler _jwtHandler;
     private readonly SymmetricSecurityKey _jwtKey;
@@ -33,7 +33,7 @@ public sealed partial class AuthService : IAuthService
         AppDbContext db,
         JwtSettings jwtSettings,
         IPasswordHasherService passwordHasher,
-        AuthRateLimitService rateLimit,
+        IAuthRateLimitService rateLimit,
         IAuditLogService auditLog)
     {
         _db = db;

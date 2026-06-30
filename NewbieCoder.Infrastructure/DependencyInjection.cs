@@ -27,7 +27,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 
         // Auth services
-        services.AddSingleton<AuthRateLimitService>();
+        services.AddSingleton<IAuthRateLimitService, AuthRateLimitService>();
         services.AddScoped<IPasswordHasherService, PasswordHasherService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<IAuthService>(sp =>
@@ -35,7 +35,7 @@ public static class DependencyInjection
                 sp.GetRequiredService<AppDbContext>(),
                 sp.GetRequiredService<JwtSettings>(),
                 sp.GetRequiredService<IPasswordHasherService>(),
-                sp.GetRequiredService<AuthRateLimitService>(),
+                sp.GetRequiredService<IAuthRateLimitService>(),
                 sp.GetRequiredService<IAuditLogService>()));
 
         return services;
