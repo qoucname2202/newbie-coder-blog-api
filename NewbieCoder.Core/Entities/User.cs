@@ -1,4 +1,4 @@
-﻿using System.Net;
+﻿using NewbieCoder.Core.Enums;
 namespace NewbieCoder.Core.Entities
 {
     public class User : BaseEntity
@@ -10,7 +10,7 @@ namespace NewbieCoder.Core.Entities
         public string? AvatarUrl { get; set; }
         public string? Bio { get; set; }
 
-        public string Status { get; set; } = "INACT";
+        public UserStatus Status { get; set; } = UserStatus.Inactive;
 
         public string? CoverUrl { get; set; }
         public string? GithubUrl { get; set; }
@@ -36,5 +36,6 @@ namespace NewbieCoder.Core.Entities
         public ICollection<Series> Series { get; set; } = new List<Series>();
         public ICollection<CommunityQuestion> CommunityQuestions { get; set; } = new List<CommunityQuestion>();
         public ICollection<CommunityAnswer> CommunityAnswers { get; set; } = new List<CommunityAnswer>();
+        public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
     }
 }

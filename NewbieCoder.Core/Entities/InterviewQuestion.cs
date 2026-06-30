@@ -1,4 +1,4 @@
-﻿using System.Net;
+﻿using NewbieCoder.Core.Enums;
 namespace NewbieCoder.Core.Entities
 {
     public class InterviewQuestion : BaseEntity
@@ -7,9 +7,9 @@ namespace NewbieCoder.Core.Entities
         public string Title { get; set; } = null!;
         public string Slug { get; set; } = null!;
         public string QuestionContent { get; set; } = null!;
-        public string Level { get; set; } = null!;
+        public InterviewLevel Level { get; set; }
         public string? Topic { get; set; }
-        public string Status { get; set; } = "DRAFT";
+        public PostStatus Status { get; set; } = PostStatus.Draft;
         public int ViewCount { get; set; }
         public int VoteScore { get; set; }
         public int BookmarkCount { get; set; }

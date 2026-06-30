@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NewbieCoder.Core.Entities;
+using NewbieCoder.Core.Enums;
+using NewbieCoder.Infrastructure.Converters;
 
 namespace NewbieCoder.Infrastructure.Persistence.Configurations;
 
@@ -50,7 +52,9 @@ public class UserConfig : IEntityTypeConfiguration<User>
         b.Property(x => x.FullName).HasColumnName("full_name").HasMaxLength(150).IsRequired();
         b.Property(x => x.AvatarUrl).HasColumnName("avatar_url").HasMaxLength(1000);
         b.Property(x => x.Bio).HasColumnName("bio").HasMaxLength(500);
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(10).HasDefaultValue("INACT");
+        b.Property(x => x.Status).HasColumnName("status")
+            .HasConversion(EnumStringConverters.UserStatusConverter)
+            .HasDefaultValue(UserStatus.Inactive);
         b.Property(x => x.CoverUrl).HasColumnName("cover_url").HasMaxLength(1000);
         b.Property(x => x.GithubUrl).HasColumnName("github_url").HasMaxLength(500);
         b.Property(x => x.LinkedinUrl).HasColumnName("linkedin_url").HasMaxLength(500);
@@ -104,43 +108,12 @@ public class RoleConfig : IEntityTypeConfiguration<Role>
         b.Property(x => x.IsSystem).HasColumnName("is_system").HasDefaultValue(false);
 
         // SQL: VARCHAR(20), values 'active'/'inactive' (NOT the abbreviated 'ACT'/'INACT')
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).HasDefaultValue("active");
+        b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.RoleStatusConverter).HasDefaultValue(RoleStatus.Active);
 
         b.HasIndex(x => x.Code).IsUnique();
         b.HasIndex(x => x.Status);
 
         b.ToTable(t => t.HasCheckConstraint("ck_roles_status", "status IN ('active','inactive')"));
-    }
-}
-
-// ============================================================
-// 3. permissions
-// ============================================================
-public class PermissionConfig : IEntityTypeConfiguration<Permission>
-{
-    public void Configure(EntityTypeBuilder<Permission> b)
-    {
-        b.ToTable("permissions");
-        PgConfig.Base(b);
-        b.Property(x => x.Code).HasColumnName("code").HasMaxLength(100).IsRequired();
-        b.Property(x => x.Name).HasColumnName("name").HasMaxLength(150).IsRequired();
-        b.Property(x => x.Module).HasColumnName("module").HasMaxLength(100).IsRequired();
-
-        // SQL: VARCHAR(50), not VARCHAR(10)
-        b.Property(x => x.Action).HasColumnName("action").HasMaxLength(50).IsRequired();
-
-        b.Property(x => x.Description).HasColumnName("description").HasMaxLength(500);
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).HasDefaultValue("ACT");
-
-        b.HasIndex(x => x.Code).IsUnique();
-        b.HasIndex(x => x.Module);
-        b.HasIndex(x => x.Status);
-
-        b.ToTable(t =>
-        {
-            t.HasCheckConstraint("ck_permissions_action", "action IN ('VIEW','INIT','EDIT','DEL','APPR','RJCT','ASIG')");
-            t.HasCheckConstraint("ck_permissions_status", "status IN ('ACT','INACT')");
-        });
     }
 }
 
@@ -160,7 +133,7 @@ public class UserRoleConfig : IEntityTypeConfiguration<UserRole>
         b.Property(x => x.ExpiredAt).HasColumnName("expired_at");
 
         // SQL: VARCHAR(20), values 'active'/'revoked'/'expired'
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).HasDefaultValue("active");
+        b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.UserRoleStatusConverter).HasDefaultValue(UserRoleStatus.Active);
 
         b.HasIndex(x => x.UserId);
         b.HasIndex(x => x.RoleId);
@@ -187,41 +160,7 @@ public class UserRoleConfig : IEntityTypeConfiguration<UserRole>
 }
 
 // ============================================================
-// 5. role_permissions
-// ============================================================
-public class RolePermissionConfig : IEntityTypeConfiguration<RolePermission>
-{
-    public void Configure(EntityTypeBuilder<RolePermission> b)
-    {
-        b.ToTable("role_permissions");
-        PgConfig.Base(b);
-        b.Property(x => x.RoleId).HasColumnName("role_id");
-        b.Property(x => x.PermissionId).HasColumnName("permission_id");
-        b.Property(x => x.CreatedBy).HasColumnName("created_by");
-
-        b.HasIndex(x => new { x.RoleId, x.PermissionId }).IsUnique();
-        b.HasIndex(x => x.PermissionId);
-
-        b.HasOne(x => x.Role)
-            .WithMany(r => r.RolePermissions)
-            .HasForeignKey(x => x.RoleId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        b.HasOne(x => x.Permission)
-            .WithMany(p => p.RolePermissions)
-            .HasForeignKey(x => x.PermissionId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        // FK previously missing: created_by -> users.id
-        b.HasOne(x => x.CreatedByUser)
-            .WithMany()
-            .HasForeignKey(x => x.CreatedBy)
-            .OnDelete(DeleteBehavior.NoAction);
-    }
-}
-
-// ============================================================
-// 6. user_devices  (MISSING FROM THE ORIGINAL FILE — newly added)
+// 5. user_devices
 // ============================================================
 public class UserDeviceConfig : IEntityTypeConfiguration<UserDevice>
 {
@@ -233,13 +172,13 @@ public class UserDeviceConfig : IEntityTypeConfiguration<UserDevice>
         b.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
         b.Property(x => x.DeviceId).HasColumnName("device_id").HasMaxLength(100).IsRequired();
         b.Property(x => x.DeviceName).HasColumnName("device_name").HasMaxLength(150);
-        b.Property(x => x.DeviceType).HasColumnName("device_type").HasMaxLength(30).IsRequired();
+        b.Property(x => x.DeviceType).HasColumnName("device_type").HasConversion(EnumStringConverters.DeviceTypeConverter).HasDefaultValue(DeviceType.Web);
         b.Property(x => x.Os).HasColumnName("os").HasMaxLength(100);
         b.Property(x => x.Browser).HasColumnName("browser").HasMaxLength(100);
         b.Property(x => x.UserAgent).HasColumnName("user_agent").HasMaxLength(500);
         b.Property(x => x.IpAddress).HasColumnName("ip_address").HasMaxLength(45);
         b.Property(x => x.LastLoginAt).HasColumnName("last_login_at");
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).HasDefaultValue("active");
+        b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.DeviceStatusConverter).HasDefaultValue(DeviceStatus.Active);
 
         b.HasIndex(x => new { x.UserId, x.DeviceId }).IsUnique();
         b.HasIndex(x => x.UserId);
@@ -273,7 +212,7 @@ public class UserSessionConfig : IEntityTypeConfiguration<UserSession>
         b.Property(x => x.SessionTokenHash).HasColumnName("session_token_hash").HasMaxLength(255).IsRequired();
         b.Property(x => x.IpAddress).HasColumnName("ip_address").HasMaxLength(45);
         b.Property(x => x.UserAgent).HasColumnName("user_agent").HasMaxLength(500);
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).HasDefaultValue("active");
+        b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.SessionStatusConverter).HasDefaultValue(SessionStatus.Active);
         b.Property(x => x.LoginAt).HasColumnName("login_at").HasDefaultValueSql("now()");
         b.Property(x => x.LastActiveAt).HasColumnName("last_active_at");
         b.Property(x => x.ExpiredAt).HasColumnName("expired_at").IsRequired();
@@ -312,7 +251,7 @@ public class RefreshTokenConfig : IEntityTypeConfiguration<RefreshToken>
         b.Property(x => x.SessionId).HasColumnName("session_id").IsRequired();
         b.Property(x => x.TokenHash).HasColumnName("token_hash").HasMaxLength(255).IsRequired();
         b.Property(x => x.TokenFamily).HasColumnName("token_family").HasColumnType("uuid");
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).HasDefaultValue("active");
+        b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.TokenStatusConverter).HasDefaultValue(TokenStatus.Active);
         b.Property(x => x.IssuedAt).HasColumnName("issued_at").HasDefaultValueSql("now()");
         b.Property(x => x.ExpiredAt).HasColumnName("expired_at").IsRequired();
         b.Property(x => x.UsedAt).HasColumnName("used_at");
@@ -361,7 +300,7 @@ public class LoginHistoryConfig : IEntityTypeConfiguration<LoginHistory>
         b.Property(x => x.SessionId).HasColumnName("session_id");
         b.Property(x => x.IpAddress).HasColumnName("ip_address").HasMaxLength(45);
         b.Property(x => x.UserAgent).HasColumnName("user_agent").HasMaxLength(500);
-        b.Property(x => x.LoginStatus).HasColumnName("login_status").HasMaxLength(30).IsRequired();
+        b.Property(x => x.LoginStatus).HasColumnName("login_status").HasConversion(EnumStringConverters.LoginStatusConverter).IsRequired();
         b.Property(x => x.FailureReason).HasColumnName("failure_reason").HasMaxLength(100);
 
         b.HasIndex(x => x.UserId);
@@ -388,7 +327,7 @@ public class PasswordResetTokenConfig : IEntityTypeConfiguration<PasswordResetTo
 
         b.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
         b.Property(x => x.TokenHash).HasColumnName("token_hash").HasMaxLength(255).IsRequired();
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).HasDefaultValue("active");
+        b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.TokenStatusConverter).HasDefaultValue(TokenStatus.Active);
         b.Property(x => x.RequestedIp).HasColumnName("requested_ip").HasMaxLength(45);
         b.Property(x => x.RequestedUserAgent).HasColumnName("requested_user_agent").HasMaxLength(500);
         b.Property(x => x.ExpiredAt).HasColumnName("expired_at").IsRequired();
@@ -423,8 +362,7 @@ public class PostCategoryConfig : IEntityTypeConfiguration<PostCategory>
         b.Property(x => x.Description).HasColumnName("description").HasColumnType("text");
         b.Property(x => x.ParentId).HasColumnName("parent_id");
 
-        // SQL: VARCHAR(30), values 'active'/'inactive'
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).HasDefaultValue("active");
+        b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.EntityStatusConverter).HasDefaultValue(EntityStatus.Active);
 
         b.HasIndex(x => x.Slug).IsUnique();
         b.HasIndex(x => x.ParentId);
@@ -453,7 +391,7 @@ public class TagConfig : IEntityTypeConfiguration<Tag>
         b.Property(x => x.Description).HasColumnName("description").HasColumnType("text");
 
         // SQL: VARCHAR(30)
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).HasDefaultValue("active");
+        b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.EntityStatusConverter).HasDefaultValue(EntityStatus.Active);
 
         b.Property(x => x.PostCount).HasColumnName("post_count").HasDefaultValue(0);
         b.Property(x => x.QuestionCount).HasColumnName("question_count").HasDefaultValue(0);
@@ -490,10 +428,10 @@ public class PostConfig : IEntityTypeConfiguration<Post>
         b.Property(x => x.ThumbnailUrl).HasColumnName("thumbnail_url").HasColumnType("text");
 
         // SQL: VARCHAR(30), values 'draft','pending','published','rejected','hidden','deleted'
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).HasDefaultValue("draft");
+        b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.PostStatusConverter).HasDefaultValue(PostStatus.Draft);
 
         // SQL: VARCHAR(30), values 'public','private','link_only'
-        b.Property(x => x.Visibility).HasColumnName("visibility").HasMaxLength(30).HasDefaultValue("public");
+        b.Property(x => x.Visibility).HasColumnName("visibility").HasConversion(EnumStringConverters.PostVisibilityConverter).HasDefaultValue(PostVisibility.Public);
 
         b.Property(x => x.ViewCount).HasColumnName("view_count").HasDefaultValue(0);
         b.Property(x => x.CommentCount).HasColumnName("comment_count").HasDefaultValue(0);
@@ -571,9 +509,8 @@ public class SeriesConfig : IEntityTypeConfiguration<Series>
         b.Property(x => x.Description).HasColumnName("description").HasColumnType("text");
         b.Property(x => x.ThumbnailUrl).HasColumnName("thumbnail_url").HasColumnType("text");
 
-        // SQL: VARCHAR(30)
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).HasDefaultValue("draft");
-        b.Property(x => x.Visibility).HasColumnName("visibility").HasMaxLength(30).HasDefaultValue("public");
+        b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.PostStatusConverter).HasDefaultValue(PostStatus.Draft);
+        b.Property(x => x.Visibility).HasColumnName("visibility").HasConversion(EnumStringConverters.PostVisibilityConverter).HasDefaultValue(PostVisibility.Public);
 
         b.Property(x => x.ViewCount).HasColumnName("view_count").HasDefaultValue(0);
         b.Property(x => x.BookmarkCount).HasColumnName("bookmark_count").HasDefaultValue(0);
@@ -643,11 +580,10 @@ public class InterviewQuestionConfig : IEntityTypeConfiguration<InterviewQuestio
         b.Property(x => x.Slug).HasColumnName("slug").HasMaxLength(500).IsRequired();
         b.Property(x => x.QuestionContent).HasColumnName("question_content").HasColumnType("text").IsRequired();
 
-        // SQL: VARCHAR(30), values 'entry','junior','middle','senior','expert'
-        b.Property(x => x.Level).HasColumnName("level").HasMaxLength(30).IsRequired();
+        b.Property(x => x.Level).HasColumnName("level").HasConversion(EnumStringConverters.InterviewLevelConverter).IsRequired();
 
         b.Property(x => x.Topic).HasColumnName("topic").HasMaxLength(100);
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).HasDefaultValue("draft");
+        b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.PostStatusConverter).HasDefaultValue(PostStatus.Draft);
         b.Property(x => x.ViewCount).HasColumnName("view_count").HasDefaultValue(0);
         b.Property(x => x.VoteScore).HasColumnName("vote_score").HasDefaultValue(0);
         b.Property(x => x.BookmarkCount).HasColumnName("bookmark_count").HasDefaultValue(0);
@@ -740,8 +676,7 @@ public class CommunityQuestionConfig : IEntityTypeConfiguration<CommunityQuestio
         b.Property(x => x.Slug).HasColumnName("slug").HasMaxLength(500).IsRequired();
         b.Property(x => x.Content).HasColumnName("content").HasColumnType("text").IsRequired();
 
-        // SQL: VARCHAR(30), values 'open','answered','resolved','closed','hidden'
-        b.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).HasDefaultValue("open");
+        b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.CommunityQuestionStatusConverter).HasDefaultValue(CommunityQuestionStatus.Open);
 
         b.Property(x => x.AcceptedAnswerId).HasColumnName("accepted_answer_id");
         b.Property(x => x.ViewCount).HasColumnName("view_count").HasDefaultValue(0);
@@ -835,5 +770,53 @@ public class CommunityQuestionTagConfig : IEntityTypeConfiguration<CommunityQues
             .WithMany(t => t.CommunityQuestionTags)
             .HasForeignKey(x => x.TagId)
             .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+// ============================================================
+// 23. audit_logs
+// ============================================================
+public class AuditLogConfig : IEntityTypeConfiguration<AuditLog>
+{
+    public void Configure(EntityTypeBuilder<AuditLog> b)
+    {
+        b.ToTable("audit_logs");
+        b.HasKey(x => x.Id);
+
+        b.Property(x => x.Id)
+            .HasColumnName("id")
+            .UseIdentityAlwaysColumn()
+            .ValueGeneratedOnAdd();
+
+        b.Property(x => x.UserId).HasColumnName("user_id");
+        b.Property(x => x.Email).HasColumnName("email");
+        b.Property(x => x.SessionId).HasColumnName("session_id");
+        b.Property(x => x.DeviceId).HasColumnName("device_id");
+        b.Property(x => x.IpAddress).HasColumnName("ip_address");
+        b.Property(x => x.UserAgent).HasColumnName("user_agent");
+        b.Property(x => x.Action).HasColumnName("action").HasMaxLength(100);
+        b.Property(x => x.EntityType).HasColumnName("entity_type").HasMaxLength(100);
+        b.Property(x => x.EntityId).HasColumnName("entity_id");
+        b.Property(x => x.Details).HasColumnName("details");
+        b.Property(x => x.CreatedAt).HasColumnName("created_at");
+
+        b.HasIndex(x => x.UserId);
+        b.HasIndex(x => x.Action);
+        b.HasIndex(x => x.CreatedAt);
+
+        b.HasOne(x => x.User)
+            .WithMany(u => u.AuditLogs)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        b.HasOne(x => x.Session)
+            .WithMany(s => s.AuditLogs)
+            .HasForeignKey(x => x.SessionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        b.HasOne(x => x.Device)
+            .WithMany(d => d.AuditLogs)
+            .HasForeignKey(x => x.DeviceId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

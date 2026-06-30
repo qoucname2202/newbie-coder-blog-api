@@ -1,4 +1,4 @@
-﻿using System.Net;
+﻿using NewbieCoder.Core.Enums;
 namespace NewbieCoder.Core.Entities
 {
     public class UserSession : BaseEntity
@@ -9,7 +9,7 @@ namespace NewbieCoder.Core.Entities
         public string? IpAddress { get; set; }
         public string? UserAgent { get; set; }
 
-        public string Status { get; set; } = "ACT";
+        public SessionStatus Status { get; set; } = SessionStatus.Active;
         public DateTimeOffset LoginAt { get; set; }
         public DateTimeOffset? LastActiveAt { get; set; }
         public DateTimeOffset ExpiredAt { get; set; }
@@ -19,5 +19,6 @@ namespace NewbieCoder.Core.Entities
         public User User { get; set; } = null!;
         public UserDevice? Device { get; set; }
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
     }
 }

@@ -1,5 +1,4 @@
-﻿using System.Net;
-
+﻿using NewbieCoder.Core.Enums;
 namespace NewbieCoder.Core.Entities
 {
     public class UserRole : BaseEntity
@@ -9,7 +8,7 @@ namespace NewbieCoder.Core.Entities
         public long? AssignedBy { get; set; }
         public DateTimeOffset AssignedAt { get; set; }
         public DateTimeOffset? ExpiredAt { get; set; }
-        public string Status { get; set; } = "ACT";
+        public UserRoleStatus Status { get; set; } = UserRoleStatus.Active;
 
         public User User { get; set; } = null!;
         public Role Role { get; set; } = null!;

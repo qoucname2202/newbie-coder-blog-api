@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NewbieCoder.API.Extensions;
 using NewbieCoder.Core.ViewModels;
@@ -9,6 +10,7 @@ namespace NewbieCoder.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Tags("Health")]
 public class HealthController(IHttpContextAccessor httpContextAccessor) : ControllerBase
 {
     /// <summary>
