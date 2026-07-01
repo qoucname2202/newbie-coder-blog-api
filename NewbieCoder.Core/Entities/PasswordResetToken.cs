@@ -1,12 +1,11 @@
-﻿using System.Net;
-
+﻿using NewbieCoder.Core.Enums;
 namespace NewbieCoder.Core.Entities
 {
     public class PasswordResetToken : BaseEntity
     {
         public long UserId { get; set; }
         public string TokenHash { get; set; } = null!;
-        public string Status { get; set; } = "ACT";
+        public TokenStatus Status { get; set; } = TokenStatus.Active;
         public string? RequestedIp { get; set; }
         public string? RequestedUserAgent { get; set; }
         public DateTimeOffset ExpiredAt { get; set; }

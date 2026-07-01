@@ -1,5 +1,4 @@
-﻿using System.Net;
-
+﻿using NewbieCoder.Core.Enums;
 namespace NewbieCoder.Core.Entities
 {
     public class Post : BaseEntity
@@ -11,8 +10,8 @@ namespace NewbieCoder.Core.Entities
         public string? Summary { get; set; }
         public string Content { get; set; } = null!;
         public string? ThumbnailUrl { get; set; }
-        public string Status { get; set; } = "DRAFT";
-        public string Visibility { get; set; } = "PUBLIC";
+        public PostStatus Status { get; set; } = PostStatus.Draft;
+        public PostVisibility Visibility { get; set; } = PostVisibility.Public;
         public int ViewCount { get; set; }
         public int CommentCount { get; set; }
         public int VoteScore { get; set; }

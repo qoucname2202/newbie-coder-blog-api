@@ -1,4 +1,4 @@
-﻿using System.Net;
+﻿using NewbieCoder.Core.Enums;
 namespace NewbieCoder.Core.Entities
 {
 
@@ -8,7 +8,7 @@ namespace NewbieCoder.Core.Entities
         public string Slug { get; set; } = null!;
         public string? Description { get; set; }
         public long? ParentId { get; set; }
-        public string Status { get; set; } = "ACT";
+        public EntityStatus Status { get; set; } = EntityStatus.Active;
 
         public PostCategory? Parent { get; set; }
         public ICollection<PostCategory> Children { get; set; } = new List<PostCategory>();

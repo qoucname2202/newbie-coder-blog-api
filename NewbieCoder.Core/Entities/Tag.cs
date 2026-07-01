@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-
+﻿using NewbieCoder.Core.Enums;
 namespace NewbieCoder.Core.Entities
 {
     public class Tag : BaseEntity
@@ -8,7 +6,7 @@ namespace NewbieCoder.Core.Entities
         public string Name { get; set; } = null!;
         public string Slug { get; set; } = null!;
         public string? Description { get; set; }
-        public string Status { get; set; } = "ACT";
+        public EntityStatus Status { get; set; } = EntityStatus.Active;
         public int PostCount { get; set; }
         public int QuestionCount { get; set; }
         public int FollowerCount { get; set; }

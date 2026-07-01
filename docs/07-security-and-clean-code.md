@@ -360,7 +360,262 @@ public async Task<PagedResult<TodoResponse>> GetPagedAsync(PagingRequest paging,
 - [ ] No hardcoded response codes or secret values
 - [ ] Success/failure uses `ApiResponse<T>` factories
 - [ ] `requestTrace` from `GetRequestTrace()`
+- [ ] Navigation properties eager-loaded (no N+1 on list endpoints)
 - [ ] `dotnet test` passes
+
+---
+
+## 11. N+1 Query Detection and Prevention
+
+N+1 queries are one of the most common database performance anti-patterns in EF Core applications. Every list endpoint that returns related data must be checked against these rules before calling the feature done.
+
+### 11.1 What is N+1?
+
+A list endpoint returns **N resources** and fires **1 initial query + N additional queries** (one per item) — totalling **N+1 queries**. Example:
+
+```csharp
+// ❌ N+1: fetches 10 posts, then fires 10 separate queries for authors
+var posts = await _repo.ListAsync<Post>();
+foreach (var post in posts)
+{
+    post.Author = await _authorRepo.GetByIdAsync(post.AuthorId); // 10 extra queries
+}
+```
+
+With 100 posts → 101 database round-trips. This causes slow response times and database connection exhaustion.
+
+### 11.2 How to detect N+1
+
+**Method A — EF Core logging (always on in Development):**
+
+```json
+// appsettings.Development.json — Database.Command logging set to Information
+"Logging": {
+  "Microsoft.EntityFrameworkCore.Database.Command": "Information"
+}
+```
+
+In the server console output, look for **repeated identical query patterns** triggered within the same HTTP request:
+
+```
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT [p].[Id], [p].[Title] FROM [Posts] AS [p]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT [u].[Id], [u].[DisplayName] FROM [Users] AS [u] WHERE [u].[Id] = @__p_0
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT [u].[Id], [u].[DisplayName] FROM [Users] AS [u] WHERE [u].[Id] = @__p_0
+```
+
+↑ The same query repeated — classic N+1.
+
+**Method B — Use a query profiler / EF Core diagnostics:**
+
+In production-like testing, capture events via `IDbCommandInterceptor` or third-party tools (EF Core Profiler, MiniProfiler).
+
+**Method C — Count queries in unit tests:**
+
+```csharp
+[Fact]
+public async Task GetPosts_ShouldNotTriggerNPlusOne()
+{
+    // Arrange: create 5 posts with authors in the test database
+    var posts = await SeedPostsWithAuthorsAsync(count: 5);
+
+    // Act
+    var result = await _controller.GetPostsAsync(paging, CancellationToken.None);
+
+    // Assert: intercept the DbContext and count commands
+    var commandCount = _dbContext.GetCommands().Count;
+    Assert.True(commandCount <= 2,
+        $"Expected ≤2 queries but got {commandCount}. Possible N+1 detected.");
+}
+```
+
+### 11.3 How to fix N+1 — eager loading
+
+Use **`.Include()`** or **`.ThenInclude()`** to load related data in the same query:
+
+```csharp
+// ✅ Single query using eager loading — no N+1
+var posts = await _repo.ListAsync<Post>(
+    include: query => query
+        .Include(p => p.Author)
+        .Include(p => p.Tags)
+        .ThenInclude(t => t.Tag));
+
+// EF generates ONE query with JOINs:
+// SELECT p.*, a.*, t.*, tg.* FROM Posts p
+// LEFT JOIN Users a ON p.AuthorId = a.Id
+// LEFT JOIN PostTags pt ON p.Id = pt.PostId
+// LEFT JOIN Tags tg ON pt.TagId = tg.Id
+```
+
+For paginated results, always apply `Include` **before** `Skip`/`Take`:
+
+```csharp
+// ✅ Correct order: filter → include → paginate
+var posts = await _repo.ListAsync<Post>(
+    where: p => p.Status == PostStatus.Published,
+    include: q => q.Include(p => p.Author).Include(p => p.Tags),
+    orderBy: q => q.OrderByDescending(p => p.PublishedAt),
+    skip: (paging.Page - 1) * paging.PageSize,
+    take: paging.PageSize);
+```
+
+### 11.4 Split queries (for large collections)
+
+When a related collection is large (e.g. 1,000 tags per post), use **split queries** to avoid cartesian explosion in the JOIN:
+
+```csharp
+// ✅ Split query: executes 2 queries instead of 1 giant JOIN
+var posts = await _repo.ListAsync<Post>(
+    include: q => q
+        .AsSplitQuery()
+        .Include(p => p.Author)
+        .Include(p => p.Tags));
+```
+
+> ⚠️ Split queries are **not** always faster. Benchmark your specific case. Use when collection size is large or when `Distinct()` is needed on the parent query.
+
+### 11.5 Explicit loading — acceptable only after the list query
+
+Explicit loading is **never acceptable** as the primary data-loading strategy:
+
+```csharp
+// ❌ N+1 via explicit loading
+var posts = await _context.Posts.ToListAsync();
+foreach (var post in posts)
+    await _context.Entry(post).Collection(p => p.Tags).LoadAsync();
+
+// ✅ Use eager loading instead
+var posts = await _context.Posts.Include(p => p.Tags).ToListAsync();
+```
+
+Explicit loading is only acceptable for **conditional post-load scenarios** — e.g. loading additional detail on demand after an initial query already returned.
+
+### 11.6 Count queries — avoid N+1 in totals
+
+When returning `PagedResult<T>`, compute the total count in a **separate query** rather than loading all rows:
+
+```csharp
+// ✅ Two targeted queries: one for data, one for count
+var totalCount = await _repo.CountAsync<Post>(where: p => p.Status == PostStatus.Published);
+var posts = await _repo.ListAsync<Post>(/* same where clause */, skip, take);
+```
+
+Do **not** call `.ToListAsync()` then use `posts.Count` — that forces EF to materialize all rows just to count them.
+
+### 11.7 Projections — when DTOs eliminate joins
+
+Use **`.Select()` projections** to load only the fields you need, avoiding full entity materialization:
+
+```csharp
+// ✅ Projection: loads only needed columns, no full entity + no N+1
+var result = await _repo.ListAsync<Post>(
+    where: p => p.Status == PostStatus.Published,
+    select: p => new PostSummary
+    {
+        Id = p.Id,
+        Title = p.Title,
+        AuthorName = p.Author.DisplayName,  // EF generates LEFT JOIN automatically
+        TagCount = p.Tags.Count()
+    },
+    orderBy: q => q.OrderByDescending(p => p.PublishedAt),
+    skip, take);
+```
+
+This is preferred over `.Include()` when you only need a subset of fields.
+
+### 11.8 N+1 rules summary for agents
+
+| Situation | Rule |
+|-----------|------|
+| Any list endpoint returning entities with navigation properties | **Must** use `.Include()` or `.Select()` projection |
+| Multiple navigation levels | Use `.Include(x => x.Nav).ThenInclude(x => x.DeepNav)` |
+| Large collections (100+ items) | Consider `.AsSplitQuery()` |
+| Getting a count + data | Use two targeted queries — do not materialize all rows |
+| Explicit loading inside a loop | **Forbidden** |
+| `.ToListAsync()` before calling `.Include()` | **Forbidden** |
+| EF log showing repeated identical queries | **Warning**: N+1 detected — fix immediately |
+
+### 11.9 Agent checklist (N+1 per endpoint)
+
+- [ ] List endpoint uses `.Include()` for all navigation properties
+- [ ] EF log shows ≤ 2 queries (1 data + 1 count) for a paginated list
+- [ ] No explicit loading or `.LoadAsync()` inside a loop
+- [ ] Projection used instead of full entity when only subset of fields is needed
+- [ ] `dotnet test` passes
+- [ ] Response time benchmarked: list of 100 items should complete < 200 ms locally
+
+---
+
+## 12. Implementation reference
+
+- [ ] RESTful route and correct HTTP status (200/201/400/401/403/404/500)
+- [ ] HTTP status matches `responseStatus.responseCode` pair
+- [ ] List GET has pagination
+- [ ] Rate limit config unchanged or intentionally updated
+- [ ] Comments added (English) for classes and complex logic
+- [ ] No hardcoded response codes or secret values
+- [ ] Success/failure uses `ApiResponse<T>` factories
+- [ ] `requestTrace` from `GetRequestTrace()`
+- [ ] `dotnet test` passes
+
+---
+
+## 13. Configuration and Secrets — appsettings.*.json
+
+### 13.1 appsettings.Development.json — sensitivity rules
+
+`appsettings.Development.json` typically contains the **local development connection string** and verbose logging levels. While it is excluded from production deployments, it **must not be committed to git** because:
+
+- It may contain credentials or connection strings not intended for the team
+- Development overrides (e.g., disabling HTTPS, lowering log levels) should be local-only
+- `appsettings.Development.json` is auto-generated by the .NET scaffolding and its content varies by machine
+
+**`appsettings.Development.json` is listed in `.gitignore` — do not remove it.**
+
+| File | In git? | Reason |
+|------|---------|--------|
+| `appsettings.json` | ✅ Yes | Only safe defaults / placeholders |
+| `appsettings.Development.json` | ❌ No | Local overrides, dev connection strings |
+| `appsettings.*.local.json` | ❌ No | Per-developer overrides |
+| `.env` | ❌ No | Real credentials (local/CI) |
+
+### 13.2 Connection strings in Development
+
+For local development, use `dotnet user-secrets` instead of hardcoding in `appsettings.Development.json`:
+
+```powershell
+# Set the connection string via user-secrets (never committed to git)
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=...;Database=...;"
+```
+
+Or use environment variables:
+
+```powershell
+# In launchSettings.json or terminal
+$env:ConnectionStrings__DefaultConnection = "Server=...;Database=...;"
+```
+
+### 13.3 Adding secrets to documentation
+
+If a secret value must appear in documentation (e.g., a sample connection string in a guide), use a clearly-marked placeholder:
+
+```json
+// ❌ Never show a real password
+"ConnectionStrings": {
+  "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=TestDb;User Id=sa;Password=MySecret123"
+}
+
+// ✅ Use a clearly-marked placeholder
+"ConnectionStrings": {
+  "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=TestDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True"
+}
+```
 
 ---
 
