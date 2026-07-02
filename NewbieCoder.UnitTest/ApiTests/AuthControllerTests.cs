@@ -44,6 +44,34 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
     private void ResetRateLimit() => _factory.RateLimitService.Reset();
     private void ResetLoginState() => _factory.ClearLoginState();
 
+    /// <summary>
+    /// Calls POST /api/v1/auth/login with the current TestAuthService setup, extracts the
+    /// access token from the response and returns an HttpClient that sends it as
+    /// Authorization: Bearer … on every request. Use this helper to test protected endpoints
+    /// like GET /me or POST /logout without manually constructing JWT headers.
+    /// </summary>
+    private async Task<HttpClient> GetAuthenticatedClientAsync(
+        CancellationToken cancellationToken = default)
+    {
+        ResetRateLimit();
+        ResetLoginState();
+
+        var loginResponse = await _client.PostAsJsonAsync(
+            "/api/v1/auth/login",
+            new LoginRequest { LoginId = "test@example.com", Password = "Password@123" },
+            _jsonOptions,
+            cancellationToken);
+
+        loginResponse.EnsureSuccessStatusCode();
+        var body = await loginResponse.Content.ReadFromJsonAsync<AuthTokenResponse>(_jsonOptions, cancellationToken);
+        Assert.NotNull(body);
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", body!.AccessToken);
+        return client;
+    }
+
     #region Login Tests
 
     [Fact]
@@ -220,6 +248,44 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    /// <summary>
+    /// Happy-path for GET /me: login to obtain a bearer token, call /me, assert 200 + user data.
+    /// </summary>
+    [Fact]
+    public async Task GetMe_WithValidToken_Returns200()
+    {
+        using var client = await GetAuthenticatedClientAsync();
+
+        var response = await client.GetAsync("/api/v1/auth/me");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<ApiResponse<UserInfoResponse>>(_jsonOptions);
+        Assert.NotNull(body);
+        Assert.Equal("000000", body!.ResponseStatus.ResponseCode);
+        Assert.Equal("test@example.com", body.ResponseData!.Email);
+    }
+
+    /// <summary>
+    /// After logout, the same token should no longer be accepted — /me returns 401.
+    /// </summary>
+    [Fact]
+    public async Task GetMe_AfterLogout_Returns401()
+    {
+        using var client = await GetAuthenticatedClientAsync();
+
+        // Confirm token is valid before logout.
+        var beforeLogout = await client.GetAsync("/api/v1/auth/me");
+        Assert.Equal(HttpStatusCode.OK, beforeLogout.StatusCode);
+
+        // Logout.
+        var logoutResponse = await client.PostAsync("/api/v1/auth/logout", null);
+        Assert.Equal(HttpStatusCode.OK, logoutResponse.StatusCode);
+
+        // Re-use the same (now-revoked) token — must be rejected.
+        var afterLogout = await client.GetAsync("/api/v1/auth/me");
+        Assert.Equal(HttpStatusCode.Unauthorized, afterLogout.StatusCode);
+    }
+
     #endregion
 }
 
@@ -282,10 +348,24 @@ public sealed class TestAuthService : IAuthService
         });
     }
 
-    public Task LogoutAsync(long userId, long sessionId, string? ipAddress, string? userAgent, CancellationToken cancellationToken = default) =>
+    public Task LogoutAsync(
+        long userId,
+        long sessionId,
+        string? refreshToken,
+        LogoutReason logoutReason,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken = default) =>
         Task.CompletedTask;
 
-    public Task LogoutAllAsync(long userId, string? ipAddress, string? userAgent, CancellationToken cancellationToken = default) =>
+    public Task LogoutAllAsync(
+        long userId,
+        long? currentSessionId,
+        bool keepCurrentSession,
+        LogoutReason logoutReason,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken = default) =>
         Task.CompletedTask;
 
     public Task<UserInfoResponse> GetCurrentUserAsync(long userId, CancellationToken cancellationToken = default) =>
