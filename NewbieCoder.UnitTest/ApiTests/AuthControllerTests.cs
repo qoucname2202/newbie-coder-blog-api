@@ -14,6 +14,7 @@ using NewbieCoder.Core.DTOs.Request.Auth;
 using NewbieCoder.Core.DTOs.Response.Auth;
 using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.Interfaces.Services;
+using NewbieCoder.Core.ViewModels;
 using NewbieCoder.Infrastructure.Data;
 using NewbieCoder.Infrastructure.Services;
 using Xunit;
