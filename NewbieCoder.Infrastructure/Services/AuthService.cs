@@ -421,7 +421,7 @@ public sealed partial class AuthService : IAuthService
         (long userPk, long devicePk, long sessionPk, List<string> roles) =
             await ExecuteInTransactionAsync(async () =>
             {
-                // 1. Insert users.
+                // Insert users.
                 var user = new User
                 {
                     Email = normalizedEmail,
@@ -437,7 +437,7 @@ public sealed partial class AuthService : IAuthService
                 await _db.SaveChangesAsync(cancellationToken);
                 var userPk = user.Id;
 
-                // 2. Assign default USER role.
+                // Assign default USER role.
                 var roleCode = DetermineRoleCode(null);
                 var role = await _db.Roles
                     .AsNoTracking()
@@ -462,7 +462,6 @@ public sealed partial class AuthService : IAuthService
                 _db.UserRoles.Add(userRole);
                 await _db.SaveChangesAsync(cancellationToken);
 
-                // 3. Insert or update user_devices.
                 long devicePk;
                 var existingDevice = await _db.UserDevices
                     .AsNoTracking()
@@ -502,7 +501,7 @@ public sealed partial class AuthService : IAuthService
                     devicePk = existingDevice.Id;
                 }
 
-                // 4. Create session.
+                // Create session.
                 var sessionTokenPlain = AuthConstants.Helpers.GenerateSecureToken();
                 var sessionTokenHash = AuthConstants.Helpers.HashToken(sessionTokenPlain);
                 var session = new UserSession
@@ -522,7 +521,7 @@ public sealed partial class AuthService : IAuthService
                 await _db.SaveChangesAsync(cancellationToken);
                 var sessionPk = session.Id;
 
-                // 5. Create refresh token.
+                // Create refresh token.
                 var refreshTokenPlain = AuthConstants.Helpers.GenerateSecureToken();
                 var refreshTokenHash = AuthConstants.Helpers.HashToken(refreshTokenPlain);
                 var refreshToken = new RefreshToken
@@ -539,7 +538,7 @@ public sealed partial class AuthService : IAuthService
                 _db.RefreshTokens.Add(refreshToken);
                 await _db.SaveChangesAsync(cancellationToken);
 
-                // 6. Record successful registration in login_histories.
+                // Record successful registration in login_histories.
                 var history = new LoginHistory
                 {
                     UserId = userPk,
@@ -554,7 +553,7 @@ public sealed partial class AuthService : IAuthService
                 _db.LoginHistories.Add(history);
                 await _db.SaveChangesAsync(cancellationToken);
 
-                // 7. Audit log (defer save until after transaction commits).
+                // Audit log (defer save until after transaction commits).
                 _db.AuditLogs.Add(new AuditLog
                 {
                     UserId = userPk,
