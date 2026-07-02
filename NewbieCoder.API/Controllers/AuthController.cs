@@ -128,6 +128,48 @@ public sealed class AuthController(
 
     #endregion
 
+    #region Register
+
+    /// <summary>
+    /// Registers a new user account. Creates the user, assigns the default USER role,
+    /// opens a session, issues a refresh token, and returns JWT access token.
+    /// All DB writes are wrapped in a single transaction — any failure rolls back everything.
+    /// </summary>
+    /// <param name="request">email, username, password, confirm_password, full_name, accept_terms, role_request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    [HttpPost("register")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<RegisterResponse>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(AuthErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(AuthErrorResponse), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(AuthErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(AuthErrorResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Register(
+        [FromBody] RegisterRequest request,
+        CancellationToken cancellationToken)
+    {
+        var trace = HttpContext.GetRequestTrace();
+        var ipAddress = GetClientIp() ?? string.Empty;
+
+        var result = await authService.RegisterAsync(
+            request,
+            Request.Headers["X-Device-Id"].FirstOrDefault(),
+            Request.Headers["X-Device-Name"].FirstOrDefault(),
+            Request.Headers["X-Device-Type"].FirstOrDefault(),
+            Request.Headers.UserAgent.FirstOrDefault(),
+            ipAddress,
+            cancellationToken);
+
+        return StatusCode(
+            HttpStatusCodes.Created,
+            ApiResponse<RegisterResponse>.Success(
+                result,
+                trace,
+                RegisterResponseMessages.RegisterSuccess));
+    }
+
+    #endregion
+
     #region Get Current User
 
     /// <summary>
