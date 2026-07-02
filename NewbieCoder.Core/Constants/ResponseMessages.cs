@@ -17,6 +17,8 @@ public static class ResponseMessages
     public const string TooManyLoginAttempts = "Too many failed login attempts. Please try again after 15 minutes.";
     public const string LogoutSuccess = "Logged out successfully.";
     public const string SessionNotFound = "Session not found or has expired.";
+    public const string SessionRevoked = "This session has been revoked.";
     public const string Unauthenticated = "Please log in to continue.";
     public const string UserNotFound = "Account does not exist.";
+    public const string ProfileSuccess = "Profile retrieved successfully.";
 }

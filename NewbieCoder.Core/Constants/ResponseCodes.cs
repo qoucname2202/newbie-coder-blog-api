@@ -15,6 +15,7 @@ public static class ResponseCodes
     public const string Forbidden = "00000205";
     public const string TooManyRequests = "00000429";
 
+    public const string SessionRevoked = "00000401S";
     public const string InternalError = "00000500";
 
     /// <summary>
@@ -44,6 +45,7 @@ public static class ResponseCodes
         Unauthorized => HttpStatusCodes.Unauthorized,
         Forbidden => HttpStatusCodes.Forbidden,
         TooManyRequests => HttpStatusCodes.TooManyRequests,
+        SessionRevoked => HttpStatusCodes.Unauthorized,
         InternalError => HttpStatusCodes.InternalServerError,
         _ => HttpStatusCodes.InternalServerError
     };
