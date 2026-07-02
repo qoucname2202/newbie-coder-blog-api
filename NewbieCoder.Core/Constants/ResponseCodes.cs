@@ -17,11 +17,17 @@ public static class ResponseCodes
 
     public const string InternalError = "00000500";
 
+    // Auth-specific codes
+    public const string InvalidLogoutReason = "00000401_01";
+    public const string SessionAlreadyRevoked = "00000401_02";
+    public const string InvalidRefreshToken = "00000401_03";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>
     public static string FromHttpStatus(int statusCode) => statusCode switch
     {
+        HttpStatusCodes.Ok => Success,
         HttpStatusCodes.BadRequest => ValidationError,
         HttpStatusCodes.NotFound => NotFound,
         HttpStatusCodes.Conflict => Conflict,
@@ -45,6 +51,9 @@ public static class ResponseCodes
         Forbidden => HttpStatusCodes.Forbidden,
         TooManyRequests => HttpStatusCodes.TooManyRequests,
         InternalError => HttpStatusCodes.InternalServerError,
+        InvalidLogoutReason => HttpStatusCodes.BadRequest,
+        SessionAlreadyRevoked => HttpStatusCodes.Ok,
+        InvalidRefreshToken => HttpStatusCodes.BadRequest,
         _ => HttpStatusCodes.InternalServerError
     };
 }

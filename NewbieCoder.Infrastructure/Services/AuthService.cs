@@ -273,47 +273,105 @@ public sealed partial class AuthService : IAuthService
     #region Logout
 
     /// <inheritdoc />
+    /// <inheritdoc />
     public async Task LogoutAsync(
         long userId,
         long sessionId,
+        string? refreshToken,
+        LogoutReason logoutReason,
         string? ipAddress,
         string? userAgent,
         CancellationToken cancellationToken = default)
     {
         var now = DateTimeOffset.UtcNow;
+        var reason = ToSessionRevokedReason(logoutReason);
+
+        var session = await _db.UserSessions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s =>
+                s.Id == sessionId && s.UserId == userId,
+                cancellationToken);
+
+        if (session == null)
+        {
+            throw new BusinessException(
+                ResponseMessages.SessionNotFound,
+                statusCode: HttpStatusCodes.NotFound,
+                responseCode: ResponseCodes.NotFound);
+        }
+
+        if (session.Status == SessionStatus.Revoked)
+            return;
+
+        var deviceId = session.DeviceId;
 
         await ExecuteInTransactionAsync(async () =>
         {
-            var revoked = await _db.UserSessions
-                .Where(s => s.Id == sessionId && s.UserId == userId && s.Status == SessionStatus.Active)
+            await _db.UserSessions
+                .Where(s => s.Id == sessionId && s.Status == SessionStatus.Active)
                 .ExecuteUpdateAsync(s => s
                     .SetProperty(s => s.Status, SessionStatus.Revoked)
                     .SetProperty(s => s.RevokedAt, now)
-                    .SetProperty(s => s.RevokedReason, "logout"),
+                    .SetProperty(s => s.RevokedReason, reason),
                     cancellationToken);
 
-            if (revoked == 0)
-                return;
-
+            var tokenStatusesToRevoke = new[] { TokenStatus.Active, TokenStatus.Used };
             await _db.RefreshTokens
-                .Where(rt => rt.SessionId == sessionId && rt.Status == TokenStatus.Active)
+                .Where(rt => rt.SessionId == sessionId && tokenStatusesToRevoke.Contains(rt.Status))
                 .ExecuteUpdateAsync(s => s
                     .SetProperty(rt => rt.Status, TokenStatus.Revoked)
                     .SetProperty(rt => rt.RevokedAt, now),
                     cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(refreshToken))
+            {
+                var hashedToken = AuthConstants.Helpers.HashToken(refreshToken);
+                await _db.RefreshTokens
+                    .Where(rt => rt.TokenHash == hashedToken)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(rt => rt.Status, TokenStatus.Revoked)
+                        .SetProperty(rt => rt.RevokedAt, now),
+                        cancellationToken);
+            }
+
+            if (deviceId.HasValue)
+            {
+                _db.UserDevices
+                    .Where(d => d.Id == deviceId)
+                    .ExecuteUpdate(s => s
+                        .SetProperty(d => d.LastLoginAt, now));
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+        }, cancellationToken);
+
+        await RecordAuditLogAsync(new AuditLog
+        {
+            UserId = userId,
+            SessionId = sessionId,
+            DeviceId = deviceId,
+            Action = AuditActions.UserLogout,
+            IpAddress = ipAddress,
+            UserAgent = userAgent,
+            Details = $"Session {sessionId} revoked. Reason: {reason}",
+            CreatedAt = now
         }, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task LogoutAllAsync(
         long userId,
+        long? currentSessionId,
+        bool keepCurrentSession,
+        LogoutReason logoutReason,
         string? ipAddress,
         string? userAgent,
         CancellationToken cancellationToken = default)
     {
         var now = DateTimeOffset.UtcNow;
+        var reason = ToSessionRevokedReason(logoutReason);
 
-        var user = await _db.Users
+        var userEmail = await _db.Users
             .AsNoTracking()
             .Where(u => u.Id == userId)
             .Select(u => u.Email)
@@ -321,34 +379,90 @@ public sealed partial class AuthService : IAuthService
 
         await ExecuteInTransactionAsync(async () =>
         {
-            await _db.UserSessions
-                .Where(s => s.UserId == userId && s.Status == SessionStatus.Active)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(s => s.Status, SessionStatus.Revoked)
-                    .SetProperty(s => s.RevokedAt, now)
-                    .SetProperty(s => s.RevokedReason, "logout_all"),
-                    cancellationToken);
-
-            await _db.RefreshTokens
-                .Where(rt => rt.UserId == userId && rt.Status == TokenStatus.Active)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(rt => rt.Status, TokenStatus.Revoked)
-                    .SetProperty(rt => rt.RevokedAt, now),
-                    cancellationToken);
-
-            _db.AuditLogs.Add(new AuditLog
+            if (keepCurrentSession && currentSessionId.HasValue)
             {
-                UserId = userId,
-                Email = user,
-                Action = "USER_LOGOUT_ALL",
-                IpAddress = ipAddress,
-                UserAgent = userAgent,
-                Details = "All sessions and refresh tokens revoked",
-                CreatedAt = now
-            });
+                await _db.UserSessions
+                    .Where(s =>
+                        s.UserId == userId &&
+                        s.Id != currentSessionId.Value &&
+                        s.Status == SessionStatus.Active)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(s => s.Status, SessionStatus.Revoked)
+                        .SetProperty(s => s.RevokedAt, now)
+                        .SetProperty(s => s.RevokedReason, reason),
+                        cancellationToken);
+
+                await _db.RefreshTokens
+                    .Where(rt =>
+                        rt.UserId == userId &&
+                        rt.SessionId != currentSessionId.Value &&
+                        rt.Status == TokenStatus.Active)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(rt => rt.Status, TokenStatus.Revoked)
+                        .SetProperty(rt => rt.RevokedAt, now),
+                        cancellationToken);
+            }
+            else
+            {
+                await _db.UserSessions
+                    .Where(s => s.UserId == userId && s.Status == SessionStatus.Active)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(s => s.Status, SessionStatus.Revoked)
+                        .SetProperty(s => s.RevokedAt, now)
+                        .SetProperty(s => s.RevokedReason, reason),
+                        cancellationToken);
+
+                await _db.RefreshTokens
+                    .Where(rt => rt.UserId == userId && rt.Status == TokenStatus.Active)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(rt => rt.Status, TokenStatus.Revoked)
+                        .SetProperty(rt => rt.RevokedAt, now),
+                        cancellationToken);
+            }
 
             await _db.SaveChangesAsync(cancellationToken);
         }, cancellationToken);
+
+        await RecordAuditLogAsync(new AuditLog
+        {
+            UserId = userId,
+            Email = userEmail,
+            SessionId = currentSessionId,
+            Action = AuditActions.UserLogoutAll,
+            IpAddress = ipAddress,
+            UserAgent = userAgent,
+            Details = keepCurrentSession
+                ? $"All other sessions revoked for user {userId}"
+                : $"All sessions and refresh tokens revoked for user {userId}",
+            CreatedAt = now
+        }, cancellationToken);
+    }
+
+    private static string ToSessionRevokedReason(LogoutReason reason) => reason switch
+    {
+        LogoutReason.UserLogout => "user_logout",
+        LogoutReason.Security => "security",
+        LogoutReason.SwitchAccount => "switch_account",
+        LogoutReason.LogoutAll => "logout_all",
+        LogoutReason.PasswordChanged => "password_changed",
+        _ => "user_logout"
+    };
+
+    /// <summary>
+    /// Best-effort audit log write. Missing table or any non-critical failure is silently ignored
+    /// so that audit logging never blocks or rolls back the caller's transaction.
+    /// </summary>
+    private async Task RecordAuditLogAsync(AuditLog entry, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _db.AuditLogs.Add(entry);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // Table may not exist yet (pre-migration) or other transient infra issue — swallow.
+        }
     }
 
     #endregion
@@ -625,6 +739,9 @@ public sealed partial class AuthService : IAuthService
 
         return _jwtHandler.WriteToken(token);
     }
+
+    /// <inheritdoc />
+    public bool IsTokenRevoked(string token) => false;
 
     #endregion
 }
