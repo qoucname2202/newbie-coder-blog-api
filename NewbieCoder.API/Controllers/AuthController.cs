@@ -13,7 +13,7 @@ using NewbieCoder.Infrastructure.Services;
 namespace NewbieCoder.API.Controllers;
 
 /// <summary>
-/// Handles authentication operations: login, logout, token refresh, and current user profile.
+/// Handles authentication operations: login, logout, and token refresh.
 /// </summary>
 [ApiController]
 [Route("api/v1/auth")]
@@ -124,28 +124,6 @@ public sealed class AuthController(
             "OK",
             trace,
             ResponseMessages.LogoutSuccess));
-    }
-
-    #endregion
-
-    #region Get Current User
-
-    /// <summary>
-    /// Returns the authenticated user's profile with their current roles and permissions.
-    /// </summary>
-    [HttpGet("me")]
-    [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<UserInfoResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken)
-    {
-        var trace = HttpContext.GetRequestTrace();
-        var userId = GetRequiredUserId();
-
-        var result = await authService.GetCurrentUserAsync(userId, cancellationToken);
-
-        return Ok(ApiResponse<UserInfoResponse>.Success(result, trace));
     }
 
     #endregion

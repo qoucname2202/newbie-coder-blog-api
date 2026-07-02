@@ -12,6 +12,7 @@ using NewbieCoder.API.Controllers;
 using NewbieCoder.Core.Constants;
 using NewbieCoder.Core.DTOs.Request.Auth;
 using NewbieCoder.Core.DTOs.Response.Auth;
+using NewbieCoder.Core.DTOs.Response.User;
 using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.Interfaces.Services;
 using NewbieCoder.Infrastructure.Data;
@@ -216,7 +217,7 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
     [Fact]
     public async Task GetMe_WithoutToken_Returns401()
     {
-        var response = await _client.GetAsync("/api/v1/auth/me");
+        var response = await _client.GetAsync("/api/v1/users/me");
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
