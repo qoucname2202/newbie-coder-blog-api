@@ -740,6 +740,9 @@ public sealed partial class AuthService : IAuthService
         return _jwtHandler.WriteToken(token);
     }
 
+    /// <inheritdoc />
+    public bool IsTokenRevoked(string token) => false;
+
     #endregion
 }
 

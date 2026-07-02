@@ -50,6 +50,8 @@ public interface IAuthService
 
     long? ValidateAndGetUserId(string token);
 
+    bool IsTokenRevoked(string token);
+
     string GenerateRefreshToken(
         long userId,
         string email,
