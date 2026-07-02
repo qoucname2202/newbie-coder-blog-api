@@ -22,7 +22,13 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Development");
+        builder.UseEnvironment("Test");
+
+        // Set environment variables on the builder BEFORE the host is built.
+        // This makes them available when Program.Main runs (which is part of host startup).
+        builder.UseSetting("JwtSettings__Secret", "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!");
+        builder.UseSetting("JwtSettings__Issuer", "NewbieCoderAPI");
+        builder.UseSetting("JwtSettings__Audience", "NewbieCoderClient");
 
         builder.ConfigureAppConfiguration(config =>
         {
@@ -49,8 +55,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             foreach (var d in rateLimitDescriptors) services.Remove(d);
             services.AddSingleton<IAuthRateLimitService>(_rateLimit);
 
-            // Override JwtMiddlewareSettings so AuthMiddleware uses the test secret/issuer/audience.
-            services.Remove(services.Single(sd => sd.ServiceType == typeof(JwtMiddlewareSettings)));
+            // Override JwtMiddlewareSettings — if already registered, replace it with test values.
+            var jwtSettingsDescriptor = services.SingleOrDefault(sd => sd.ServiceType == typeof(JwtMiddlewareSettings));
+            if (jwtSettingsDescriptor != null) services.Remove(jwtSettingsDescriptor);
             services.AddSingleton(new JwtMiddlewareSettings
             {
                 Secret = "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!",
