@@ -17,6 +17,11 @@ public static class ResponseCodes
 
     public const string InternalError = "00000500";
 
+    // Update profile
+    public const string EmptyUpdateBody = "00000401";
+    public const string InvalidUpdateField = "00000402";
+    public const string UsernameAlreadyExists = "00000409";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>
@@ -45,6 +50,9 @@ public static class ResponseCodes
         Forbidden => HttpStatusCodes.Forbidden,
         TooManyRequests => HttpStatusCodes.TooManyRequests,
         InternalError => HttpStatusCodes.InternalServerError,
+        EmptyUpdateBody => HttpStatusCodes.BadRequest,
+        InvalidUpdateField => HttpStatusCodes.BadRequest,
+        UsernameAlreadyExists => HttpStatusCodes.Conflict,
         _ => HttpStatusCodes.InternalServerError
     };
 }

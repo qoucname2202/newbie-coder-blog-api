@@ -1,0 +1,107 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using NewbieCoder.API.Extensions;
+using NewbieCoder.Core.Constants;
+using NewbieCoder.Core.DTOs.Request.User;
+using NewbieCoder.Core.DTOs.Response.User;
+using NewbieCoder.Core.Exceptions;
+using NewbieCoder.Core.Interfaces.Services;
+using NewbieCoder.Core.ViewModels;
+
+namespace NewbieCoder.API.Controllers;
+
+/// <summary>
+/// Handles user profile operations.
+/// </summary>
+[ApiController]
+[Route("api/v1/users")]
+[Produces("application/json")]
+[Tags("Users")]
+[Authorize]
+public sealed class UserController(IAuthService authService) : ControllerBase
+{
+    /// <summary>
+    /// Updates the current authenticated user's profile.
+    /// Only the fields provided in the request body will be updated.
+    /// Fields not in the body retain their current values.
+    /// </summary>
+    /// <param name="request">Profile fields to update. All are optional.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    [HttpPatch("me")]
+    [ProducesResponseType(typeof(ApiResponse<UpdateProfileResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UpdateProfileValidationErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateProfile(
+        [FromBody] UpdateProfileRequest request,
+        CancellationToken cancellationToken)
+    {
+        var trace = HttpContext.GetRequestTrace();
+        var userId = GetRequiredUserId();
+        var sessionId = GetRequiredSessionId();
+        var ipAddress = GetClientIp();
+        var userAgent = Request.Headers.UserAgent.FirstOrDefault();
+
+        // Empty body — no fields to update.
+        var hasAnyField = request.FullName != null ||
+                          request.Username != null ||
+                          request.AvatarUrl != null ||
+                          request.Bio != null ||
+                          request.DisplayTitle != null ||
+                          request.WebsiteUrl != null;
+
+        if (!hasAnyField)
+            throw new BusinessException(
+                ResponseMessages.EmptyUpdateBody,
+                statusCode: HttpStatusCodes.BadRequest,
+                responseCode: ResponseCodes.EmptyUpdateBody);
+
+        var result = await authService.UpdateProfileAsync(
+            userId,
+            sessionId,
+            request,
+            ipAddress,
+            userAgent,
+            cancellationToken);
+
+        return Ok(ApiResponse<UpdateProfileResponse>.Success(
+            result,
+            trace,
+            ResponseMessages.UpdateProfileSuccess));
+    }
+
+    private long GetRequiredUserId()
+    {
+        var userId = User.GetUserId();
+        if (userId == null)
+            throw new BusinessException(
+                ResponseMessages.Unauthenticated,
+                statusCode: HttpStatusCodes.Unauthorized,
+                responseCode: ResponseCodes.Unauthorized);
+
+        return userId.Value;
+    }
+
+    private long GetRequiredSessionId()
+    {
+        var sessionId = User.GetSessionId();
+        if (sessionId == null)
+            throw new BusinessException(
+                ResponseMessages.Unauthenticated,
+                statusCode: HttpStatusCodes.Unauthorized,
+                responseCode: ResponseCodes.Unauthorized);
+
+        return sessionId.Value;
+    }
+
+    private string? GetClientIp()
+    {
+        var forwarded = Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(forwarded))
+            return forwarded.Split(',', StringSplitOptions.RemoveEmptyEntries)[0].Trim();
+
+        return HttpContext.Connection.RemoteIpAddress?.ToString();
+    }
+}
