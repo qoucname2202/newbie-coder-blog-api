@@ -335,7 +335,10 @@ public sealed partial class AuthService : IAuthService
                     .SetProperty(rt => rt.Status, TokenStatus.Revoked)
                     .SetProperty(rt => rt.RevokedAt, now),
                     cancellationToken);
+        }, cancellationToken);
 
+        try
+        {
             _db.AuditLogs.Add(new AuditLog
             {
                 UserId = userId,
@@ -346,9 +349,9 @@ public sealed partial class AuthService : IAuthService
                 Details = "All sessions and refresh tokens revoked",
                 CreatedAt = now
             });
-
             await _db.SaveChangesAsync(cancellationToken);
-        }, cancellationToken);
+        }
+        catch (DbUpdateException) { }
     }
 
     #endregion
@@ -383,6 +386,362 @@ public sealed partial class AuthService : IAuthService
             Roles = roles
         };
     }
+
+    #endregion
+
+    #region Register
+
+    /// <inheritdoc />
+    public async Task<RegisterResponse> RegisterAsync(
+        RegisterRequest request,
+        string? deviceId,
+        string? deviceName,
+        string? deviceType,
+        string? userAgent,
+        string? ipAddress,
+        CancellationToken cancellationToken = default)
+    {
+        // Normalize inputs.
+        var normalizedEmail = request.Email?.Trim().ToLowerInvariant() ?? string.Empty;
+        var normalizedUsername = request.Username?.Trim().ToLowerInvariant() ?? string.Empty;
+        var normalizedFullName = SanitizeFullName(request.FullName ?? string.Empty);
+        ipAddress ??= "unknown";
+
+        // Pre-transactional checks (fast, no side-effects).
+        await ValidateRegisterRequestAsync(request, normalizedEmail, normalizedUsername, cancellationToken);
+
+        // Hash password — never store plain text.
+        var passwordHash = _passwordHasher.Hash(request.Password!);
+
+        // Check if device is blocked.
+        var effectiveDeviceId = deviceId ?? Guid.NewGuid().ToString();
+        await CheckDeviceBlockedAsync(effectiveDeviceId, cancellationToken);
+
+        // All writes in a single transaction — any failure rolls back everything.
+        (long userPk, long devicePk, long sessionPk, List<string> roles) =
+            await ExecuteInTransactionAsync(async () =>
+            {
+                // Insert users.
+                var user = new User
+                {
+                    Email = normalizedEmail,
+                    Password = passwordHash,
+                    Username = normalizedUsername,
+                    FullName = normalizedFullName,
+                    Location = string.Empty,
+                    Status = UserStatus.Active,
+                    EffDate = DateTimeOffset.UtcNow,
+                    EmailVerified = false
+                };
+                _db.Users.Add(user);
+                await _db.SaveChangesAsync(cancellationToken);
+                var userPk = user.Id;
+
+                // Assign default USER role.
+                var roleCode = DetermineRoleCode(null);
+                var role = await _db.Roles
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(r =>
+                        r.Code == roleCode &&
+                        r.Status == RoleStatus.Active,
+                        cancellationToken)
+                    ?? throw new BusinessException(
+                        RegisterResponseMessages.DefaultRoleNotFound,
+                        statusCode: HttpStatusCodes.InternalServerError,
+                        responseCode: ResponseCodes.DefaultRoleNotFound);
+
+                var userRole = new UserRole
+                {
+                    UserId = userPk,
+                    RoleId = role.Id,
+                    AssignedAt = DateTimeOffset.UtcNow,
+                    ExpiredAt = null,
+                    Status = UserRoleStatus.Active,
+                    EffDate = DateTimeOffset.UtcNow
+                };
+                _db.UserRoles.Add(userRole);
+                await _db.SaveChangesAsync(cancellationToken);
+
+                long devicePk;
+                var existingDevice = await _db.UserDevices
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(d =>
+                        d.UserId == userPk && d.DeviceId == effectiveDeviceId,
+                        cancellationToken);
+
+                if (existingDevice == null)
+                {
+                    var newDevice = new UserDevice
+                    {
+                        UserId = userPk,
+                        DeviceId = effectiveDeviceId,
+                        DeviceName = deviceName,
+                        DeviceType = Enum.TryParse<DeviceType>(deviceType, ignoreCase: true, out var dt)
+                            ? dt : DeviceType.Web,
+                        Os = AuthConstants.Helpers.ParseOs(userAgent),
+                        Browser = AuthConstants.Helpers.ParseBrowser(userAgent),
+                        UserAgent = userAgent,
+                        IpAddress = ipAddress,
+                        Status = DeviceStatus.Active,
+                        LastLoginAt = DateTimeOffset.UtcNow,
+                        EffDate = DateTimeOffset.UtcNow
+                    };
+                    _db.UserDevices.Add(newDevice);
+                    await _db.SaveChangesAsync(cancellationToken);
+                    devicePk = newDevice.Id;
+                }
+                else
+                {
+                    existingDevice.LastLoginAt = DateTimeOffset.UtcNow;
+                    existingDevice.IpAddress = ipAddress;
+                    existingDevice.UserAgent = userAgent;
+                    existingDevice.Status = DeviceStatus.Active;
+                    _db.UserDevices.Update(existingDevice);
+                    await _db.SaveChangesAsync(cancellationToken);
+                    devicePk = existingDevice.Id;
+                }
+
+                // Create session.
+                var sessionTokenPlain = AuthConstants.Helpers.GenerateSecureToken();
+                var sessionTokenHash = AuthConstants.Helpers.HashToken(sessionTokenPlain);
+                var session = new UserSession
+                {
+                    UserId = userPk,
+                    DeviceId = devicePk,
+                    SessionTokenHash = sessionTokenHash,
+                    IpAddress = ipAddress,
+                    UserAgent = userAgent,
+                    Status = SessionStatus.Active,
+                    LoginAt = DateTimeOffset.UtcNow,
+                    LastActiveAt = DateTimeOffset.UtcNow,
+                    ExpiredAt = DateTimeOffset.UtcNow.AddDays(AuthConstants.SessionExpirationDays),
+                    EffDate = DateTimeOffset.UtcNow
+                };
+                _db.UserSessions.Add(session);
+                await _db.SaveChangesAsync(cancellationToken);
+                var sessionPk = session.Id;
+
+                // Create refresh token.
+                var refreshTokenPlain = AuthConstants.Helpers.GenerateSecureToken();
+                var refreshTokenHash = AuthConstants.Helpers.HashToken(refreshTokenPlain);
+                var refreshToken = new RefreshToken
+                {
+                    UserId = userPk,
+                    SessionId = sessionPk,
+                    TokenHash = refreshTokenHash,
+                    TokenFamily = Guid.NewGuid(),
+                    Status = TokenStatus.Active,
+                    IssuedAt = DateTimeOffset.UtcNow,
+                    ExpiredAt = DateTimeOffset.UtcNow.AddDays(AuthConstants.RefreshTokenExpirationDaysDefault),
+                    EffDate = DateTimeOffset.UtcNow
+                };
+                _db.RefreshTokens.Add(refreshToken);
+                await _db.SaveChangesAsync(cancellationToken);
+
+                // Record successful registration in login_histories.
+                var history = new LoginHistory
+                {
+                    UserId = userPk,
+                    Email = normalizedEmail,
+                    DeviceId = devicePk,
+                    SessionId = sessionPk,
+                    IpAddress = ipAddress,
+                    UserAgent = userAgent,
+                    LoginStatus = LoginStatus.Success,
+                    EffDate = DateTimeOffset.UtcNow
+                };
+                _db.LoginHistories.Add(history);
+                await _db.SaveChangesAsync(cancellationToken);
+
+                // Audit log (defer save until after transaction commits).
+                _db.AuditLogs.Add(new AuditLog
+                {
+                    UserId = userPk,
+                    Email = normalizedEmail,
+                    Action = "USER_REGISTERED",
+                    IpAddress = ipAddress,
+                    UserAgent = userAgent,
+                    Details = $"New user registered: {normalizedEmail}",
+                    CreatedAt = DateTimeOffset.UtcNow
+                });
+
+                var roles = new List<string> { role.Code };
+                return (userPk, devicePk, sessionPk, roles);
+            }, cancellationToken);
+
+        // Audit log must be saved outside the transaction so it never blocks user registration
+        // if the audit_logs table doesn't exist yet.
+        try
+        {
+            _db.AuditLogs.Add(new AuditLog
+            {
+                UserId = userPk,
+                Email = normalizedEmail,
+                Action = "USER_REGISTERED",
+                IpAddress = ipAddress ?? "unknown",
+                UserAgent = userAgent,
+                Details = $"New user registered: {normalizedEmail}",
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException) { }
+
+        // Generate JWTs (outside transaction — no DB dependency).
+        var accessToken = GenerateAccessToken(
+            userPk,
+            normalizedEmail,
+            normalizedUsername,
+            roles,
+            sessionPk,
+            devicePk);
+
+        var refreshTokenJwt = GenerateRefreshToken(
+            userPk,
+            normalizedEmail,
+            roles,
+            sessionPk,
+            devicePk);
+
+        return new RegisterResponse
+        {
+            AccessToken = accessToken,
+            TokenType = AuthConstants.TokenTypeBearer,
+            ExpiresIn = AuthConstants.AccessTokenExpirationSeconds,
+            Scope = "read write"
+        };
+    }
+
+    private async Task ValidateRegisterRequestAsync(
+        RegisterRequest request,
+        string normalizedEmail,
+        string normalizedUsername,
+        CancellationToken cancellationToken)
+    {
+        // Email uniqueness.
+        var emailExists = await _db.Users
+            .AsNoTracking()
+            .AnyAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
+
+        if (emailExists)
+            throw new BusinessException(
+                RegisterResponseMessages.EmailAlreadyExists,
+                statusCode: HttpStatusCodes.Conflict,
+                responseCode: ResponseCodes.EmailAlreadyExists);
+
+        // Username uniqueness.
+        var usernameExists = await _db.Users
+            .AsNoTracking()
+            .AnyAsync(u => u.Username.ToLower() == normalizedUsername, cancellationToken);
+
+        if (usernameExists)
+            throw new BusinessException(
+                RegisterResponseMessages.UsernameAlreadyExists,
+                statusCode: HttpStatusCodes.Conflict,
+                responseCode: ResponseCodes.UsernameAlreadyExists);
+
+        // Password strength: uppercase, lowercase, digit, special char.
+        if (!IsPasswordStrong(request.Password!, out var strengthError))
+            throw new BusinessException(
+                strengthError,
+                statusCode: HttpStatusCodes.BadRequest,
+                responseCode: ResponseCodes.PasswordTooWeak);
+
+        // Password must not contain username or full name.
+        if (ContainsUserInfo(request.Password!, normalizedUsername, request.FullName ?? string.Empty))
+            throw new BusinessException(
+                RegisterResponseMessages.PasswordContainsUserInfo,
+                statusCode: HttpStatusCodes.BadRequest,
+                responseCode: ResponseCodes.PasswordTooWeak);
+
+        // Terms acceptance.
+        if (!request.AcceptTerms)
+            throw new BusinessException(
+                RegisterResponseMessages.TermsNotAccepted,
+                statusCode: HttpStatusCodes.BadRequest,
+                responseCode: ResponseCodes.TermsNotAccepted);
+    }
+
+    private async Task CheckDeviceBlockedAsync(string deviceId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(deviceId) || deviceId.Length < 10)
+            return;
+
+        var blockedDevice = await _db.UserDevices
+            .AsNoTracking()
+            .AnyAsync(d => d.DeviceId == deviceId && d.Status == DeviceStatus.Blocked, cancellationToken);
+
+        if (blockedDevice)
+            throw new BusinessException(
+                RegisterResponseMessages.DeviceBlocked,
+                statusCode: HttpStatusCodes.Forbidden,
+                responseCode: ResponseCodes.DeviceBlocked);
+    }
+
+    private static string DetermineRoleCode(string? roleRequest)
+    {
+        if (!string.IsNullOrWhiteSpace(roleRequest))
+        {
+            var normalized = roleRequest.Trim().ToUpperInvariant();
+            if (normalized is "USER" or "CONTRIBUTOR")
+                return normalized;
+        }
+        return RoleConstants.User;
+    }
+
+    private static bool IsPasswordStrong(string password, out string errorMessage)
+    {
+        errorMessage = string.Empty;
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            errorMessage = RegisterResponseMessages.PasswordTooWeak;
+            return false;
+        }
+        if (!password.Any(char.IsUpper))
+        {
+            errorMessage = RegisterResponseMessages.PasswordTooWeak;
+            return false;
+        }
+        if (!password.Any(char.IsLower))
+        {
+            errorMessage = RegisterResponseMessages.PasswordTooWeak;
+            return false;
+        }
+        if (!password.Any(char.IsDigit))
+        {
+            errorMessage = RegisterResponseMessages.PasswordTooWeak;
+            return false;
+        }
+        if (!password.Any(c => !char.IsLetterOrDigit(c)))
+        {
+            errorMessage = RegisterResponseMessages.PasswordTooWeak;
+            return false;
+        }
+        return true;
+    }
+
+    private static bool ContainsUserInfo(string password, string username, string fullName)
+    {
+        var lowerPassword = password.ToLowerInvariant();
+        if (!string.IsNullOrWhiteSpace(username) && lowerPassword.Contains(username.ToLowerInvariant()))
+            return true;
+        if (!string.IsNullOrWhiteSpace(fullName))
+        {
+            var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var part in parts)
+            {
+                if (part.Length >= 3 && lowerPassword.Contains(part.ToLowerInvariant()))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    private static string SanitizeFullName(string raw) =>
+        System.Text.RegularExpressions.Regex.Replace(raw.Trim(), @"<[^>]*>", string.Empty)
+            .Replace("<", string.Empty)
+            .Replace(">", string.Empty)
+            .Trim();
 
     #endregion
 
