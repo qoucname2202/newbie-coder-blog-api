@@ -26,6 +26,7 @@ namespace NewbieCoder.Core.Entities
         public bool EmailVerified { get; set; }
         public DateTimeOffset? EmailVerifiedAt { get; set; }
         public DateTimeOffset? LastLoginAt { get; set; }
+        public DateTimeOffset? PasswordChangedAt { get; set; }
 
 
         // Navigation

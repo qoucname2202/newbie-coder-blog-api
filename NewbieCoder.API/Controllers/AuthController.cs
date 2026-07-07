@@ -21,7 +21,8 @@ namespace NewbieCoder.API.Controllers;
 [Tags("Authentication")]
 public sealed class AuthController(
     IAuthService authService,
-    IAuthRateLimitService rateLimit)
+    IAuthRateLimitService rateLimit,
+    IPasswordResetService passwordResetService)
     : ControllerBase
 {
     #region Login
@@ -146,6 +147,106 @@ public sealed class AuthController(
         var result = await authService.GetCurrentUserAsync(userId, cancellationToken);
 
         return Ok(ApiResponse<UserInfoResponse>.Success(result, trace));
+    }
+
+    #endregion
+
+    #region Forgot Password
+
+    /// <summary>
+    /// Sends a password-reset email to the address provided, if that address exists and is active.
+    /// Always returns HTTP 200 to prevent email enumeration.
+    /// Rate-limited: 5 req/IP/15m, 3 req/email/15m, 5 req/user/1h.
+    /// </summary>
+    /// <param name="request">Contains the email address to send the reset link to.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status429TooManyRequests)]
+    public async Task<IActionResult> ForgotPassword(
+        [FromBody] ForgotPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var trace = HttpContext.GetRequestTrace();
+
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return BadRequest(ApiResponse<string>.Fail(
+                trace,
+                ResponseCodes.ValidationError,
+                ResponseMessages.InvalidEmailFormat));
+        }
+
+        await passwordResetService.InitiateResetAsync(
+            request.Email,
+            GetClientIp(),
+            Request.Headers.UserAgent.FirstOrDefault(),
+            cancellationToken);
+
+        return Ok(ApiResponse<string>.Success(
+            data: string.Empty,
+            requestTrace: trace,
+            responseMessage: ResponseMessages.ForgotPasswordSuccess));
+    }
+
+    #endregion
+
+    #region Reset Password
+
+    /// <summary>
+    /// Resets the user's password using the token from the reset email.
+    /// The token is used exactly once; all active sessions and refresh tokens are revoked.
+    /// </summary>
+    /// <param name="request">Contains the reset token and new password.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<ResetPasswordSuccessResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ResetPassword(
+        [FromBody] ResetPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var trace = HttpContext.GetRequestTrace();
+
+        // Validate passwords match before touching the database.
+        if (!string.Equals(request.NewPassword, request.ConfirmPassword, StringComparison.Ordinal))
+        {
+            return BadRequest(ApiResponse<string>.Fail(
+                trace,
+                ResponseCodes.PasswordNotMatch,
+                ResponseMessages.PasswordNotMatch));
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ResetToken))
+        {
+            return BadRequest(ApiResponse<string>.Fail(
+                trace,
+                ResponseCodes.ResetTokenRequired,
+                ResponseMessages.ResetTokenRequired));
+        }
+
+        if (string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return BadRequest(ApiResponse<string>.Fail(
+                trace,
+                ResponseCodes.PasswordTooWeak,
+                ResponseMessages.PasswordTooWeak));
+        }
+
+        var result = await passwordResetService.CompleteResetAsync(
+            request.ResetToken,
+            request.NewPassword,
+            GetClientIp(),
+            Request.Headers.UserAgent.FirstOrDefault(),
+            cancellationToken);
+
+        return Ok(ApiResponse<ResetPasswordSuccessResponse>.Success(
+            result,
+            trace,
+            ResponseMessages.ResetPasswordSuccess));
     }
 
     #endregion

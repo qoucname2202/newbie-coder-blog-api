@@ -10,10 +10,12 @@ namespace NewbieCoder.Infrastructure.Data.SeedData;
 /// <summary>
 /// Seeds the initial set of system roles and default admin/test accounts.
 /// Runs automatically at application startup when <c>SeedData:Enabled</c> is <c>true</c>.
-/// Fully idempotent — safe to call multiple times.
+/// Executes exactly once — safe to call multiple times.
 /// </summary>
 public sealed class AuthDbSeeder
 {
+    private const string SeedKey = "auth_seed_v1";
+
     private readonly AppDbContext _db;
     private readonly ILogger<AuthDbSeeder> _logger;
 
@@ -24,14 +26,35 @@ public sealed class AuthDbSeeder
     }
 
     /// <summary>
-    /// Seeds roles and default accounts if not already present.
+    /// Seeds roles and default accounts if not already seeded.
     /// </summary>
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
+        // Ensure the seed_flags table exists (idempotent — CREATE TABLE IF NOT EXISTS).
+        await _db.Database.ExecuteSqlRawAsync(
+            """
+            CREATE TABLE IF NOT EXISTS seed_flags (
+                key VARCHAR(255) PRIMARY KEY,
+                seeded_at TIMESTAMP WITH TIME ZONE NOT NULL
+            )
+            """,
+            cancellationToken);
+
+        // Skip entirely if already seeded.
+        var alreadySeeded = await _db.SeedFlags.AnyAsync(f => f.Key == SeedKey, cancellationToken);
+        if (alreadySeeded)
+        {
+            _logger.LogInformation("AuthDbSeeder: already seeded, skipping.");
+            return;
+        }
+
         _logger.LogInformation("AuthDbSeeder: starting seed...");
 
         await SeedRolesAsync(cancellationToken);
         await SeedUsersAsync(cancellationToken);
+
+        _db.SeedFlags.Add(new SeedFlag { Key = SeedKey, SeededAt = DateTimeOffset.UtcNow });
+        await _db.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("AuthDbSeeder: seed completed.");
     }

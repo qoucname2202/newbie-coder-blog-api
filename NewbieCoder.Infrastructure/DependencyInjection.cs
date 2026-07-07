@@ -21,7 +21,7 @@ public static class DependencyInjection
                 b =>
                 {
                     b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
-                    b.CommandTimeout(30);
+                    b.CommandTimeout(120);
                 }));
 
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
@@ -37,6 +37,9 @@ public static class DependencyInjection
                 sp.GetRequiredService<IPasswordHasherService>(),
                 sp.GetRequiredService<IAuthRateLimitService>(),
                 sp.GetRequiredService<IAuditLogService>()));
+
+        services.AddSingleton<IEmailService, StubEmailService>();
+        services.AddScoped<IPasswordResetService, PasswordResetService>();
 
         return services;
     }

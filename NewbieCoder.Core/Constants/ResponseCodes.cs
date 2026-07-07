@@ -17,6 +17,16 @@ public static class ResponseCodes
 
     public const string InternalError = "00000500";
 
+    // Password reset
+    public const string InvalidEmailFormat = "00000201";
+    public const string ResetTokenRequired = "00000201";
+    public const string InvalidOrExpiredResetToken = "00000201";
+    public const string PasswordTooWeak = "00000201";
+    public const string PasswordNotMatch = "00000201";
+    public const string PasswordReused = "00000201";
+    public const string TooManyResetRequests = "00000429";
+    public const string EmailSendFailed = "00000500";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>

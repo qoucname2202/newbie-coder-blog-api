@@ -32,6 +32,12 @@ public static class AuthConstants
     public const int LoginIdMinLength = 3;
     public const int LoginIdMaxLength = 255;
 
+    // Password reset
+    public const int ResetTokenExpirationMinutes = 20;
+    public const int ResetRequestMaxPerIpPer15Min = 5;
+    public const int ResetRequestMaxPerEmailPer15Min = 3;
+    public const int ResetRequestMaxPerUserPerHour = 5;
+
     public static readonly string[] AllowedDeviceTypes = ["web", "mobile", "tablet", "desktop"];
 
     public const string HeaderDeviceId     = "X-Device-Id";
