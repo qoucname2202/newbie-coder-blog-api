@@ -264,19 +264,19 @@ public sealed partial class PasswordResetService : IPasswordResetService
             throw new BusinessException(
                 ResponseMessages.PasswordTooWeak,
                 statusCode: HttpStatusCodes.BadRequest,
-                responseCode: ResponseCodes.PasswordTooWeak);
+                responseCode: ResponseCodes.ResetPasswordWeak);
 
         if (newPassword.Length is < 8 or > 64)
             throw new BusinessException(
                 ResponseMessages.PasswordTooWeak,
                 statusCode: HttpStatusCodes.BadRequest,
-                responseCode: ResponseCodes.PasswordTooWeak);
+                responseCode: ResponseCodes.ResetPasswordWeak);
 
         if (!StrongPasswordRegex().IsMatch(newPassword))
             throw new BusinessException(
                 ResponseMessages.PasswordTooWeak,
                 statusCode: HttpStatusCodes.BadRequest,
-                responseCode: ResponseCodes.PasswordTooWeak);
+                responseCode: ResponseCodes.ResetPasswordWeak);
     }
 
     [GeneratedRegex(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,64}$")]
