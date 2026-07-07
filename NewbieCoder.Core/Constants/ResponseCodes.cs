@@ -21,7 +21,9 @@ public static class ResponseCodes
     public const string InvalidEmailFormat = "00000201";
     public const string ResetTokenRequired = "00000201";
     public const string InvalidOrExpiredResetToken = "00000201";
-    public const string ResetPasswordWeak = "00000201";
+    public const string ResetPasswordWeak = "00000206";
+    public const string PasswordNotMatch = "00000207";
+    public const string PasswordReused = "00000208";
     public const string TooManyResetRequests = "00000429";
     public const string EmailSendFailed = "00000500";
     // Registration
@@ -63,6 +65,8 @@ public static class ResponseCodes
         EmailAlreadyExists => HttpStatusCodes.Conflict,
         UsernameAlreadyExists => HttpStatusCodes.Conflict,
         ResetPasswordWeak => HttpStatusCodes.BadRequest,
+        PasswordNotMatch => HttpStatusCodes.BadRequest,
+        PasswordReused => HttpStatusCodes.BadRequest,
         TermsNotAccepted => HttpStatusCodes.BadRequest,
         DeviceBlocked => HttpStatusCodes.Forbidden,
         DefaultRoleNotFound => HttpStatusCodes.InternalServerError,
