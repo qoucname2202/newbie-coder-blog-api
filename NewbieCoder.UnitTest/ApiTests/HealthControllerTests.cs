@@ -18,6 +18,15 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly TestRateLimitService _rateLimit = new();
 
+    static TestWebApplicationFactory()
+    {
+        // Set JWT env vars before Program.Main runs (Env.Load in Program.cs would miss
+        // .env because AppContext.BaseDirectory differs between API and test projects).
+        Environment.SetEnvironmentVariable("JwtSettings__Secret", "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!");
+        Environment.SetEnvironmentVariable("JwtSettings__Issuer", "NewbieCoderAPI");
+        Environment.SetEnvironmentVariable("JwtSettings__Audience", "NewbieCoderClient");
+    }
+
     public TestRateLimitService RateLimitService => _rateLimit;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
