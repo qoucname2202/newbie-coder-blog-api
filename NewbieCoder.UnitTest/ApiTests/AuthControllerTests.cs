@@ -298,6 +298,22 @@ public sealed class TestAuthService : IAuthService
             Roles = new List<string> { "USER" }
         });
 
+    public Task<RegisterResponse> RegisterAsync(
+        RegisterRequest request,
+        string? deviceId,
+        string? deviceName,
+        string? deviceType,
+        string? userAgent,
+        string? ipAddress,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(new RegisterResponse
+        {
+            AccessToken = "test-access",
+            TokenType = "Bearer",
+            ExpiresIn = 900,
+            Scope = "read write"
+        });
+
     public string GenerateAccessToken(
         long userId, string email, string username,
         IReadOnlyList<string> roles,
