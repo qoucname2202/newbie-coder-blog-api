@@ -463,37 +463,6 @@ public sealed partial class AuthService : IAuthService
         {
             // Table may not exist yet (pre-migration) or other transient infra issue — swallow.
         }
-            await _db.UserSessions
-                .Where(s => s.UserId == userId && s.Status == SessionStatus.Active)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(s => s.Status, SessionStatus.Revoked)
-                    .SetProperty(s => s.RevokedAt, now)
-                    .SetProperty(s => s.RevokedReason, "logout_all"),
-                    cancellationToken);
-
-            await _db.RefreshTokens
-                .Where(rt => rt.UserId == userId && rt.Status == TokenStatus.Active)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(rt => rt.Status, TokenStatus.Revoked)
-                    .SetProperty(rt => rt.RevokedAt, now),
-                    cancellationToken);
-        }, cancellationToken);
-
-        try
-        {
-            _db.AuditLogs.Add(new AuditLog
-            {
-                UserId = userId,
-                Email = user,
-                Action = "USER_LOGOUT_ALL",
-                IpAddress = ipAddress,
-                UserAgent = userAgent,
-                Details = "All sessions and refresh tokens revoked",
-                CreatedAt = now
-            });
-            await _db.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException) { }
     }
 
     #endregion

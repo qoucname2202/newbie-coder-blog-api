@@ -26,6 +26,10 @@ public static class ResponseCodes
     public const string DeviceBlocked = "00010405";
     public const string DefaultRoleNotFound = "00010406";
 
+    public const string InvalidLogoutReason = "00020401";
+    public const string SessionAlreadyRevoked = "00020402";
+    public const string InvalidRefreshToken = "00020403";
+
 
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
