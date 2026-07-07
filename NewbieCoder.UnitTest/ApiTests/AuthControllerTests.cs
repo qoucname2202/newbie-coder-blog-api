@@ -411,6 +411,21 @@ public sealed class TestAuthService : IAuthService
     private const string TestSecret = "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!";
     private const string TestIssuer = "NewbieCoderAPI";
     private const string TestAudience = "NewbieCoderClient";
+    public Task<RegisterResponse> RegisterAsync(
+        RegisterRequest request,
+        string? deviceId,
+        string? deviceName,
+        string? deviceType,
+        string? userAgent,
+        string? ipAddress,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(new RegisterResponse
+        {
+            AccessToken = "test-access",
+            TokenType = "Bearer",
+            ExpiresIn = 900,
+            Scope = "read write"
+        });
 
     public string GenerateAccessToken(
         long userId, string email, string username,
