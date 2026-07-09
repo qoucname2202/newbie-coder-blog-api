@@ -25,6 +25,12 @@ public static class ResponseCodes
     public const string DeviceBlocked = "00010405";
     public const string DefaultRoleNotFound = "00010406";
 
+    // User management
+    public const string UserAlreadyExists    = "00020401";
+    public const string RoleNotFound         = "00020402";
+    public const string CannotCreateAdminUser = "00020403";
+    public const string UserCreateFailed     = "00020404";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>
@@ -59,6 +65,10 @@ public static class ResponseCodes
         TermsNotAccepted => HttpStatusCodes.BadRequest,
         DeviceBlocked => HttpStatusCodes.Forbidden,
         DefaultRoleNotFound => HttpStatusCodes.InternalServerError,
+        UserAlreadyExists => HttpStatusCodes.Conflict,
+        RoleNotFound => HttpStatusCodes.NotFound,
+        CannotCreateAdminUser => HttpStatusCodes.Forbidden,
+        UserCreateFailed => HttpStatusCodes.InternalServerError,
         _ => HttpStatusCodes.InternalServerError
     };
 }
