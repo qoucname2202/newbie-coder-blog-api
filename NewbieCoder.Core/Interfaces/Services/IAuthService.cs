@@ -41,6 +41,13 @@ public interface IAuthService
         UpdateProfileRequest request,
         string? ipAddress,
         string? userAgent,
+    Task<RegisterResponse> RegisterAsync(
+        RegisterRequest request,
+        string? deviceId,
+        string? deviceName,
+        string? deviceType,
+        string? userAgent,
+        string? ipAddress,
         CancellationToken cancellationToken = default);
 
     // JWT
