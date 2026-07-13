@@ -18,12 +18,18 @@ public static class ResponseCodes
     public const string InternalError = "00000500";
 
     // Registration
-    public const string EmailAlreadyExists = "00010401";
-    public const string UsernameAlreadyExists = "00010402";
+    public const string EmailAlreadyExistsAuth = "00010401";
+    public const string UsernameAlreadyExistsAuth = "00010402";
     public const string PasswordTooWeak = "00010403";
     public const string TermsNotAccepted = "00010404";
     public const string DeviceBlocked = "00010405";
     public const string DefaultRoleNotFound = "00010406";
+
+    // User management
+    public const string EmailAlreadyExistsUser = "00020401";
+    public const string UsernameAlreadyExistsUser = "00020402";
+    public const string RoleNotFound = "00020403";
+    public const string InvalidUserStatus = "00020404";
 
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
@@ -53,12 +59,16 @@ public static class ResponseCodes
         Forbidden => HttpStatusCodes.Forbidden,
         TooManyRequests => HttpStatusCodes.TooManyRequests,
         InternalError => HttpStatusCodes.InternalServerError,
-        EmailAlreadyExists => HttpStatusCodes.Conflict,
-        UsernameAlreadyExists => HttpStatusCodes.Conflict,
+        EmailAlreadyExistsAuth => HttpStatusCodes.Conflict,
+        UsernameAlreadyExistsAuth => HttpStatusCodes.Conflict,
         PasswordTooWeak => HttpStatusCodes.BadRequest,
         TermsNotAccepted => HttpStatusCodes.BadRequest,
         DeviceBlocked => HttpStatusCodes.Forbidden,
         DefaultRoleNotFound => HttpStatusCodes.InternalServerError,
+        EmailAlreadyExistsUser => HttpStatusCodes.Conflict,
+        UsernameAlreadyExistsUser => HttpStatusCodes.Conflict,
+        RoleNotFound => HttpStatusCodes.NotFound,
+        InvalidUserStatus => HttpStatusCodes.BadRequest,
         _ => HttpStatusCodes.InternalServerError
     };
 }

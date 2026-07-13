@@ -19,4 +19,11 @@ public static class ResponseMessages
     public const string SessionNotFound = "Session not found or has expired.";
     public const string Unauthenticated = "Please log in to continue.";
     public const string UserNotFound = "Account does not exist.";
+
+    // User management
+    public const string UserUpdatedSuccess = "User account updated successfully.";
+    public const string EmailAlreadyExists = "Email address is already in use.";
+    public const string UsernameAlreadyExists = "Username is already taken.";
+    public const string RoleNotFound = "The specified role does not exist.";
+    public const string InvalidUserStatus = "Invalid user status.";
 }
