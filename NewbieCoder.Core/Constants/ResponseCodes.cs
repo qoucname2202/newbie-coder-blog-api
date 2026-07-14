@@ -35,10 +35,10 @@ public static class ResponseCodes
     public const string InvalidRefreshToken = "00020403";
 
     // User management
-    public const string UserAlreadyExists    = "00020401";
-    public const string RoleNotFound         = "00020402";
-    public const string CannotCreateAdminUser = "00020403";
-    public const string UserCreateFailed     = "00020404";
+    public const string UserAlreadyExists     = "00030401";
+    public const string RoleNotFound           = "00030402";
+    public const string CannotCreateAdminUser  = "00030403";
+    public const string UserCreateFailed       = "00030404";
 
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
@@ -72,10 +72,6 @@ public static class ResponseCodes
         InvalidLogoutReason => HttpStatusCodes.BadRequest,
         SessionAlreadyRevoked => HttpStatusCodes.Ok,
         InvalidRefreshToken => HttpStatusCodes.BadRequest,
-        EmailAlreadyExists => HttpStatusCodes.Conflict,
-        EmptyUpdateBody => HttpStatusCodes.BadRequest,
-        InvalidUpdateField => HttpStatusCodes.BadRequest,
-        UsernameAlreadyExists => HttpStatusCodes.Conflict,
         EmailAlreadyExists => HttpStatusCodes.Conflict,
         UserUsernameAlreadyExists => HttpStatusCodes.Conflict,
         PasswordTooWeak => HttpStatusCodes.BadRequest,
