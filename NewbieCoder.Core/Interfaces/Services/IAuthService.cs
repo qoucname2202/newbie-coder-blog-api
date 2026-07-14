@@ -1,5 +1,7 @@
 using NewbieCoder.Core.DTOs.Request.Auth;
+using NewbieCoder.Core.DTOs.Request.User;
 using NewbieCoder.Core.DTOs.Response.Auth;
+using NewbieCoder.Core.DTOs.Response.User;
 
 namespace NewbieCoder.Core.Interfaces.Services;
 
@@ -31,6 +33,14 @@ public interface IAuthService
 
     Task<UserInfoResponse> GetCurrentUserAsync(
         long userId,
+        CancellationToken cancellationToken = default);
+
+    Task<UpdateProfileResponse> UpdateProfileAsync(
+        long userId,
+        long sessionId,
+        UpdateProfileRequest request,
+        string? ipAddress,
+        string? userAgent,
         CancellationToken cancellationToken = default);
 
     Task<RegisterResponse> RegisterAsync(

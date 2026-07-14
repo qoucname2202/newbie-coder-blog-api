@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using NewbieCoder.Core.Interfaces.Repositories;
 using NewbieCoder.Core.Interfaces.Services;
 using NewbieCoder.Infrastructure.Data;
+using NewbieCoder.Infrastructure.Repositories;
 using NewbieCoder.Infrastructure.Services;
 using NewbieCoder.Infrastructure.UnitOfWork;
 
@@ -30,6 +32,8 @@ public static class DependencyInjection
         services.AddSingleton<IAuthRateLimitService, AuthRateLimitService>();
         services.AddScoped<IPasswordHasherService, PasswordHasherService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService>(sp =>
             new AuthService(
                 sp.GetRequiredService<AppDbContext>(),
@@ -40,6 +44,9 @@ public static class DependencyInjection
 
         // User management services
         services.AddScoped<IUserService, UserService>();
+        // File upload service
+  
+        services.AddScoped<IFileUploadService, FileUploadService>();
 
         return services;
     }

@@ -17,6 +17,10 @@ public static class ResponseCodes
 
     public const string InternalError = "00000500";
 
+    // Update profile
+    public const string EmptyUpdateBody = "00000401";
+    public const string InvalidUpdateField = "00000402";
+    public const string UserUsernameAlreadyExists = "00000409";
     // Registration
     public const string EmailAlreadyExists = "00010401";
     public const string UsernameAlreadyExists = "00010402";
@@ -59,8 +63,11 @@ public static class ResponseCodes
         Forbidden => HttpStatusCodes.Forbidden,
         TooManyRequests => HttpStatusCodes.TooManyRequests,
         InternalError => HttpStatusCodes.InternalServerError,
-        EmailAlreadyExists => HttpStatusCodes.Conflict,
+        EmptyUpdateBody => HttpStatusCodes.BadRequest,
+        InvalidUpdateField => HttpStatusCodes.BadRequest,
         UsernameAlreadyExists => HttpStatusCodes.Conflict,
+        EmailAlreadyExists => HttpStatusCodes.Conflict,
+        UserUsernameAlreadyExists => HttpStatusCodes.Conflict,
         PasswordTooWeak => HttpStatusCodes.BadRequest,
         TermsNotAccepted => HttpStatusCodes.BadRequest,
         DeviceBlocked => HttpStatusCodes.Forbidden,
