@@ -527,7 +527,7 @@ public sealed partial class AuthService : IAuthService
                 throw new BusinessException(
                     ResponseMessages.UsernameAlreadyExists,
                     statusCode: HttpStatusCodes.Conflict,
-                    responseCode: ResponseCodes.UsernameAlreadyExists);
+                    responseCode: ResponseCodes.UserUsernameAlreadyExists);
         }
 
         // Gather changed fields for audit log.
@@ -967,7 +967,7 @@ public sealed partial class AuthService : IAuthService
             throw new BusinessException(
                 RegisterResponseMessages.UsernameAlreadyExists,
                 statusCode: HttpStatusCodes.Conflict,
-                responseCode: ResponseCodes.UsernameAlreadyExists);
+                responseCode: ResponseCodes.UserUsernameAlreadyExists);
 
         // Password strength: uppercase, lowercase, digit, special char.
         if (!IsPasswordStrong(request.Password!, out var strengthError))
@@ -1316,8 +1316,6 @@ public sealed partial class AuthService : IAuthService
 
     #endregion
 }
-
-/// <summary>
 /// JWT configuration options — read from appsettings.json under JwtSettings.
 /// </summary>
 public sealed class JwtSettings
@@ -1328,3 +1326,4 @@ public sealed class JwtSettings
     public required string Issuer { get; set; }
     public required string Audience { get; set; }
 }
+#endregion

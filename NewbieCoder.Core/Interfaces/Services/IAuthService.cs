@@ -41,6 +41,8 @@ public interface IAuthService
         UpdateProfileRequest request,
         string? ipAddress,
         string? userAgent,
+        CancellationToken cancellationToken = default);
+
     Task<RegisterResponse> RegisterAsync(
         RegisterRequest request,
         string? deviceId,
