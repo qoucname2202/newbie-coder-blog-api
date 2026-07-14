@@ -11,7 +11,9 @@ using Microsoft.Extensions.DependencyInjection;
 using NewbieCoder.API.Controllers;
 using NewbieCoder.Core.Constants;
 using NewbieCoder.Core.DTOs.Request.Auth;
+using NewbieCoder.Core.DTOs.Request.User;
 using NewbieCoder.Core.DTOs.Response.Auth;
+using NewbieCoder.Core.DTOs.Response.User;
 using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.Interfaces.Services;
 using NewbieCoder.Infrastructure.Data;
@@ -296,6 +298,27 @@ public sealed class TestAuthService : IAuthService
             Username = "testuser",
             FullName = "Test User",
             Roles = new List<string> { "USER" }
+        });
+
+    public Task<UpdateProfileResponse> UpdateProfileAsync(
+        long userId,
+        long sessionId,
+        UpdateProfileRequest request,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(new UpdateProfileResponse
+        {
+            Id = userId,
+            Email = "test@example.com",
+            Username = "testuser",
+            FullName = "Test User",
+            AvatarUrl = null,
+            Bio = null,
+            DisplayTitle = null,
+            WebsiteUrl = null,
+            Status = "ACTIVE",
+            UpdatedAt = DateTimeOffset.UtcNow
         });
 
     public Task<RegisterResponse> RegisterAsync(

@@ -21,6 +21,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // Ensure uploads directory exists so PhysicalFileProvider in UseStaticFiles doesn't throw.
+        var uploadsDir = Path.Combine(AppContext.BaseDirectory, "uploads");
+        Directory.CreateDirectory(uploadsDir);
+
         Environment.SetEnvironmentVariable("JwtSettings__Secret", "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!");
         Environment.SetEnvironmentVariable("JwtSettings__Issuer", "NewbieCoderAPI");
         Environment.SetEnvironmentVariable("JwtSettings__Audience", "NewbieCoderClient");

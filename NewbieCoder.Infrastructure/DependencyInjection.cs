@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using NewbieCoder.Core.Interfaces.Repositories;
 using NewbieCoder.Core.Interfaces.Services;
 using NewbieCoder.Infrastructure.Data;
@@ -37,6 +38,10 @@ public static class DependencyInjection
                 sp.GetRequiredService<IPasswordHasherService>(),
                 sp.GetRequiredService<IAuthRateLimitService>(),
                 sp.GetRequiredService<IAuditLogService>()));
+
+        // File upload service
+  
+        services.AddScoped<IFileUploadService, FileUploadService>();
 
         return services;
     }
