@@ -1,5 +1,8 @@
 using NewbieCoder.Core.DTOs.Request.User;
 using NewbieCoder.Core.DTOs.Response.User;
+using NewbieCoder.Core.DTOs.Request.Admin;
+using NewbieCoder.Core.DTOs.Response.Admin;
+using NewbieCoder.Core.ViewModels;
 
 namespace NewbieCoder.Core.Interfaces.Services;
 
@@ -8,5 +11,24 @@ public interface IUserService
     Task<UpdateUserResponse> UpdateUserAsync(
         long userId,
         UpdateUserRequest request,
+    /// <summary>
+    /// Creates a new user account with the specified role.
+    /// Admin role can only be assigned through role promotion, not during creation.
+    /// </summary>
+    /// <param name="request">User creation data.</param>
+    /// <param name="createdByUserId">ID of the admin performing the action.</param>
+    /// <param name="ipAddress">Client IP address for audit log.</param>
+    /// <param name="userAgent">Client User-Agent for audit log.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The created user data (without password/security fields).</returns>
+    Task<CreateUserResponse> CreateUserAsync(
+        CreateUserRequest request,
+        long createdByUserId,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken = default);
+
+    Task<PaginatedResponse<UserListItemResponse>> GetUsersAsync(
+        UserFilterRequest filter,
         CancellationToken cancellationToken = default);
 }

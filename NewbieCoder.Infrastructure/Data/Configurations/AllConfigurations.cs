@@ -60,6 +60,8 @@ public class UserConfig : IEntityTypeConfiguration<User>
         b.Property(x => x.CoverUrl).HasColumnName("cover_url").HasMaxLength(1000);
         b.Property(x => x.GithubUrl).HasColumnName("github_url").HasMaxLength(500);
         b.Property(x => x.LinkedinUrl).HasColumnName("linkedin_url").HasMaxLength(500);
+        b.Property(x => x.DisplayTitle).HasColumnName("display_title").HasMaxLength(100);
+        b.Property(x => x.WebsiteUrl).HasColumnName("website_url").HasMaxLength(255);
 
         // SQL column is named "location", VARCHAR(50) NOT NULL (comment: "IP address of the user")
         // -> renamed from "LastKnownIp/last_known_ip" (didn't match the SQL column) to "Location/location"

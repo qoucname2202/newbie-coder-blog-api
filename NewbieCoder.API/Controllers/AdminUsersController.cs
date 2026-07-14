@@ -6,6 +6,8 @@ using NewbieCoder.Core.Constants;
 using NewbieCoder.Core.DTOs.Request.User;
 using NewbieCoder.Core.DTOs.Response.User;
 using NewbieCoder.Core.Exceptions;
+using NewbieCoder.Core.DTOs.Request.Admin;
+using NewbieCoder.Core.DTOs.Response.Admin;
 using NewbieCoder.Core.Interfaces.Services;
 using NewbieCoder.Core.ViewModels;
 
@@ -13,11 +15,14 @@ namespace NewbieCoder.API.Controllers;
 
 /// <summary>
 /// Admin user management endpoints. All actions require Admin or equivalent role.
+/// Admin endpoints for managing users in the system.
+/// All endpoints require Admin role.
 /// </summary>
 [ApiController]
 [Route("api/admin/users")]
 [Produces("application/json")]
 [Tags("Admin - User Management")]
+[Tags("Admin - Users")]
 [Authorize]
 [RequiresRole(RoleConstants.Admin)]
 public sealed class AdminUsersController : ControllerBase
@@ -49,6 +54,18 @@ public sealed class AdminUsersController : ControllerBase
     public async Task<IActionResult> UpdateUser(
         [FromRoute] long userId,
         [FromBody] UpdateUserRequest request,
+    /// Returns a paginated list of all user accounts in the system.
+    /// Only accessible by users with the Admin role.
+    /// </summary>
+    /// <param name="filter">Search, filter, sort, and pagination parameters.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    [HttpGet]
+    [ProducesResponseType(typeof(ApiResponse<PaginatedResponse<UserListItemResponse>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetUsers(
+        [FromQuery] UserFilterRequest filter,
         CancellationToken cancellationToken)
     {
         var trace = HttpContext.GetRequestTrace();
@@ -59,5 +76,11 @@ public sealed class AdminUsersController : ControllerBase
             result,
             trace,
             ResponseMessages.UserUpdatedSuccess));
+        var result = await _userService.GetUsersAsync(filter, cancellationToken);
+
+        return Ok(ApiResponse<PaginatedResponse<UserListItemResponse>>.Success(
+            result,
+            trace,
+            AdminUsersResponseMessages.UsersRetrieved));
     }
 }
