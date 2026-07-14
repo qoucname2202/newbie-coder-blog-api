@@ -319,7 +319,7 @@ public sealed class TestAuthService : IAuthService
             WebsiteUrl = null,
             Status = "ACTIVE",
             UpdatedAt = DateTimeOffset.UtcNow
-        };
+        });
 
     public Task<RegisterResponse> RegisterAsync(
         RegisterRequest request,
