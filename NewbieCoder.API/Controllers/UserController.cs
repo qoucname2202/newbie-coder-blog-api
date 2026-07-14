@@ -18,8 +18,16 @@ namespace NewbieCoder.API.Controllers;
 [Produces("application/json")]
 [Tags("Users")]
 [Authorize]
-public sealed class UserController(IAuthService authService) : ControllerBase
+public sealed class UserController : ControllerBase
 {
+    private readonly IAuthService authService;
+    private readonly IFileUploadService fileUploadService;
+
+    public UserController(IAuthService authService, IFileUploadService fileUploadService)
+    {
+        this.authService = authService;
+        this.fileUploadService = fileUploadService;
+    }
     /// <summary>
     /// Updates the current authenticated user's profile.
     /// Only the fields provided in the request body will be updated.
@@ -103,5 +111,43 @@ public sealed class UserController(IAuthService authService) : ControllerBase
             return forwarded.Split(',', StringSplitOptions.RemoveEmptyEntries)[0].Trim();
 
         return HttpContext.Connection.RemoteIpAddress?.ToString();
+    }
+
+    /// <summary>
+    /// Uploads an avatar image for the current authenticated user.
+    /// Supported formats: .jpg, .jpeg, .png, .gif, .webp
+    /// Maximum file size: 5MB
+    /// </summary>
+    /// <param name="file">The image file to upload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    [HttpPost("me/avatar")]
+    [ProducesResponseType(typeof(ApiResponse<FileUploadResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<IActionResult> UploadAvatar(
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (file == null || file.Length == 0)
+            throw new BusinessException(
+                "No file provided",
+                statusCode: HttpStatusCodes.BadRequest,
+                responseCode: "NO_FILE_PROVIDED");
+
+        var userId = GetRequiredUserId();
+
+        await using var stream = file.OpenReadStream();
+        var result = await fileUploadService.UploadAvatarAsync(
+            userId,
+            stream,
+            file.FileName,
+            file.ContentType,
+            cancellationToken);
+
+        return Ok(ApiResponse<FileUploadResponse>.Success(
+            result,
+            HttpContext.GetRequestTrace(),
+            "Avatar uploaded successfully"));
     }
 }
