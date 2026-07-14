@@ -57,6 +57,9 @@ if (seedEnabled)
     await seeder.SeedAsync();
 }
 
+// Ensure uploads directory exists (used by UseStaticFiles).
+Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "uploads"));
+
 app.UseApiPipeline();
 
 app.Run();
