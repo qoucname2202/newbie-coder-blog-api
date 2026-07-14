@@ -22,6 +22,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
         // Set JWT env vars before Program.Main runs (Env.Load in Program.cs would miss
         // .env because AppContext.BaseDirectory differs between API and test projects).
+        // Ensure uploads directory exists so PhysicalFileProvider in UseStaticFiles doesn't throw.
+        var uploadsDir = Path.Combine(AppContext.BaseDirectory, "uploads");
+        Directory.CreateDirectory(uploadsDir);
+
         Environment.SetEnvironmentVariable("JwtSettings__Secret", "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!");
         Environment.SetEnvironmentVariable("JwtSettings__Issuer", "NewbieCoderAPI");
         Environment.SetEnvironmentVariable("JwtSettings__Audience", "NewbieCoderClient");

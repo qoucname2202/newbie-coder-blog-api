@@ -21,4 +21,13 @@ public static class ResponseMessages
     public const string Unauthenticated = "Please log in to continue.";
     public const string UserNotFound = "Account does not exist.";
     public const string InvalidLogoutReason = "Invalid logout_reason value.";
+
+    // Update profile
+    public const string EmptyUpdateBody = "No update fields provided.";
+    public const string InvalidUpdateField = "One or more fields are not allowed to be updated via this endpoint.";
+    public const string UpdateProfileSuccess = "Cập nhật thông tin cá nhân thành công";
+    public const string UpdateValidationFailed = "Dữ liệu cập nhật không hợp lệ";
+    public const string UsernameAlreadyExists = "Username này đã được sử dụng.";
+    public const string SessionInvalid = "Phiên đăng nhập không hợp lệ.";
+    public const string SessionRevoked = "Phiên đăng nhập đã bị thu hồi.";
 }

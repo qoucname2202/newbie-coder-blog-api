@@ -13,6 +13,14 @@ public static class ApplicationBuilderExtensions
         app.UseRateLimiter();
         app.UseMiddleware<ExceptionHandlingMiddleware>();
 
+        // Serve uploaded files (avatars, etc.)
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+                Path.Combine(Directory.GetCurrentDirectory(), "uploads")),
+            RequestPath = "/uploads"
+        });
+
         // Auth middleware must run before MVC to populate HttpContext.User from the Bearer token.
         app.UseMiddleware<AuthMiddleware>();
         app.UseAuthentication();

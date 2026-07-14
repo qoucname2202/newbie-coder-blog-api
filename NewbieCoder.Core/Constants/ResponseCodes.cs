@@ -18,6 +18,10 @@ public static class ResponseCodes
     public const string InternalError = "00000500";
 
 
+    // Update profile
+    public const string EmptyUpdateBody = "00000401";
+    public const string InvalidUpdateField = "00000402";
+    public const string UserUsernameAlreadyExists = "00000409";
     // Registration
     public const string EmailAlreadyExists = "00010401";
     public const string UsernameAlreadyExists = "00010402";
@@ -30,6 +34,11 @@ public static class ResponseCodes
     public const string SessionAlreadyRevoked = "00020402";
     public const string InvalidRefreshToken = "00020403";
 
+    // User management
+    public const string UserAlreadyExists    = "00020401";
+    public const string RoleNotFound         = "00020402";
+    public const string CannotCreateAdminUser = "00020403";
+    public const string UserCreateFailed     = "00020404";
 
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
@@ -64,11 +73,19 @@ public static class ResponseCodes
         SessionAlreadyRevoked => HttpStatusCodes.Ok,
         InvalidRefreshToken => HttpStatusCodes.BadRequest,
         EmailAlreadyExists => HttpStatusCodes.Conflict,
+        EmptyUpdateBody => HttpStatusCodes.BadRequest,
+        InvalidUpdateField => HttpStatusCodes.BadRequest,
         UsernameAlreadyExists => HttpStatusCodes.Conflict,
+        EmailAlreadyExists => HttpStatusCodes.Conflict,
+        UserUsernameAlreadyExists => HttpStatusCodes.Conflict,
         PasswordTooWeak => HttpStatusCodes.BadRequest,
         TermsNotAccepted => HttpStatusCodes.BadRequest,
         DeviceBlocked => HttpStatusCodes.Forbidden,
         DefaultRoleNotFound => HttpStatusCodes.InternalServerError,
+        UserAlreadyExists => HttpStatusCodes.Conflict,
+        RoleNotFound => HttpStatusCodes.NotFound,
+        CannotCreateAdminUser => HttpStatusCodes.Forbidden,
+        UserCreateFailed => HttpStatusCodes.InternalServerError,
         _ => HttpStatusCodes.InternalServerError
     };
 }

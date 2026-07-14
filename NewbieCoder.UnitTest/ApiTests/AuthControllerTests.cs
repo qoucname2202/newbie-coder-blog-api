@@ -15,7 +15,9 @@ using Microsoft.IdentityModel.Tokens;
 using NewbieCoder.API.Controllers;
 using NewbieCoder.Core.Constants;
 using NewbieCoder.Core.DTOs.Request.Auth;
+using NewbieCoder.Core.DTOs.Request.User;
 using NewbieCoder.Core.DTOs.Response.Auth;
+using NewbieCoder.Core.DTOs.Response.User;
 using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.Interfaces.Services;
 using NewbieCoder.Core.ViewModels;
@@ -415,6 +417,27 @@ public sealed class TestAuthService : IAuthService
     private const string TestSecret = "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!";
     private const string TestIssuer = "NewbieCoderAPI";
     private const string TestAudience = "NewbieCoderClient";
+    public Task<UpdateProfileResponse> UpdateProfileAsync(
+        long userId,
+        long sessionId,
+        UpdateProfileRequest request,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(new UpdateProfileResponse
+        {
+            Id = userId,
+            Email = "test@example.com",
+            Username = "testuser",
+            FullName = "Test User",
+            AvatarUrl = null,
+            Bio = null,
+            DisplayTitle = null,
+            WebsiteUrl = null,
+            Status = "ACTIVE",
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+
     public Task<RegisterResponse> RegisterAsync(
         RegisterRequest request,
         string? deviceId,
