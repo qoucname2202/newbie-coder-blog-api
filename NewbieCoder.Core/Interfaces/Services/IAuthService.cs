@@ -1,5 +1,7 @@
 using NewbieCoder.Core.DTOs.Request.Auth;
+using NewbieCoder.Core.DTOs.Request.User;
 using NewbieCoder.Core.DTOs.Response.Auth;
+using NewbieCoder.Core.DTOs.Response.User;
 
 namespace NewbieCoder.Core.Interfaces.Services;
 
@@ -19,18 +21,40 @@ public interface IAuthService
     Task LogoutAsync(
         long userId,
         long sessionId,
+        string? refreshToken,
+        LogoutReason logoutReason,
         string? ipAddress,
         string? userAgent,
         CancellationToken cancellationToken = default);
 
     Task LogoutAllAsync(
         long userId,
+        long? currentSessionId,
+        bool keepCurrentSession,
+        LogoutReason logoutReason,
         string? ipAddress,
         string? userAgent,
         CancellationToken cancellationToken = default);
 
     Task<UserInfoResponse> GetCurrentUserAsync(
         long userId,
+        CancellationToken cancellationToken = default);
+
+    Task<UpdateProfileResponse> UpdateProfileAsync(
+        long userId,
+        long sessionId,
+        UpdateProfileRequest request,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken = default);
+
+    Task<RegisterResponse> RegisterAsync(
+        RegisterRequest request,
+        string? deviceId,
+        string? deviceName,
+        string? deviceType,
+        string? userAgent,
+        string? ipAddress,
         CancellationToken cancellationToken = default);
 
     // JWT
@@ -44,6 +68,8 @@ public interface IAuthService
         long deviceId);
 
     long? ValidateAndGetUserId(string token);
+
+    bool IsTokenRevoked(string token);
 
     string GenerateRefreshToken(
         long userId,
