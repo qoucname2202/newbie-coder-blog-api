@@ -21,12 +21,17 @@ public interface IAuthService
     Task LogoutAsync(
         long userId,
         long sessionId,
+        string? refreshToken,
+        LogoutReason logoutReason,
         string? ipAddress,
         string? userAgent,
         CancellationToken cancellationToken = default);
 
     Task LogoutAllAsync(
         long userId,
+        long? currentSessionId,
+        bool keepCurrentSession,
+        LogoutReason logoutReason,
         string? ipAddress,
         string? userAgent,
         CancellationToken cancellationToken = default);
@@ -63,6 +68,8 @@ public interface IAuthService
         long deviceId);
 
     long? ValidateAndGetUserId(string token);
+
+    bool IsTokenRevoked(string token);
 
     string GenerateRefreshToken(
         long userId,

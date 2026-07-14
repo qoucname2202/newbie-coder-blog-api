@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using NewbieCoder.Core.Interfaces.Services;
 
 namespace NewbieCoder.API.Middlewares;
 
@@ -9,11 +10,17 @@ namespace NewbieCoder.API.Middlewares;
 /// Validates the JWT Bearer token on incoming requests and populates HttpContext.User.
 /// Must be registered after UseRouting and before the authorization middleware / controllers.
 /// </summary>
-public sealed class AuthMiddleware(
-    RequestDelegate next,
-    JwtMiddlewareSettings settings)
+public sealed class AuthMiddleware
 {
+    private readonly RequestDelegate _next;
+    private readonly JwtMiddlewareSettings _settings;
     private readonly JwtSecurityTokenHandler _handler = new();
+
+    public AuthMiddleware(RequestDelegate next, JwtMiddlewareSettings settings)
+    {
+        _next = next;
+        _settings = settings;
+    }
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -29,12 +36,17 @@ public sealed class AuthMiddleware(
                 var principal = TryValidateToken(token);
                 if (principal != null)
                 {
-                    context.User = principal;
+                    // Only enforce revocation check when IAuthService is available (not in all test scenarios).
+                    var authService = context.RequestServices.GetService<IAuthService>();
+                    if (authService == null || !authService.IsTokenRevoked(token))
+                    {
+                        context.User = principal;
+                    }
                 }
             }
         }
 
-        await next(context);
+        await _next(context);
     }
 
     private ClaimsPrincipal? TryValidateToken(string token)
@@ -44,12 +56,12 @@ public sealed class AuthMiddleware(
             var parameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
-                ValidIssuer = settings.Issuer,
+                ValidIssuer = _settings.Issuer,
                 ValidateAudience = true,
-                ValidAudience = settings.Audience,
+                ValidAudience = _settings.Audience,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.Secret)),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret)),
                 ClockSkew = TimeSpan.Zero
             };
 
