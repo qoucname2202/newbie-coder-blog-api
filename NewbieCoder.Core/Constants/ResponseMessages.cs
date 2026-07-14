@@ -22,8 +22,6 @@ public static class ResponseMessages
     public const string UserNotFound = "Account does not exist.";
     public const string ProfileSuccess = "Profile retrieved successfully.";
     public const string SessionAlreadyRevoked = "Session has already been revoked.";
-    public const string Unauthenticated = "Please log in to continue.";
-    public const string UserNotFound = "Account does not exist.";
     public const string InvalidLogoutReason = "Invalid logout_reason value.";
 
     // Update profile
@@ -33,5 +31,4 @@ public static class ResponseMessages
     public const string UpdateValidationFailed = "Dữ liệu cập nhật không hợp lệ";
     public const string UsernameAlreadyExists = "Username này đã được sử dụng.";
     public const string SessionInvalid = "Phiên đăng nhập không hợp lệ.";
-    public const string SessionRevoked = "Phiên đăng nhập đã bị thu hồi.";
 }
