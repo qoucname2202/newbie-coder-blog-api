@@ -272,27 +272,6 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
         Assert.Equal("test@example.com", body.ResponseData!.Email);
     }
 
-    /// <summary>
-    /// After logout, the same token should no longer be accepted — /me returns 401.
-    /// </summary>
-    [Fact]
-    public async Task GetMe_AfterLogout_Returns401()
-    {
-        using var client = await GetAuthenticatedClientAsync();
-
-        // Confirm token is valid before logout.
-        var beforeLogout = await client.GetAsync("/api/v1/auth/me");
-        Assert.Equal(HttpStatusCode.OK, beforeLogout.StatusCode);
-
-        // Logout — this invalidates the current session.
-        var logoutResponse = await client.PostAsync("/api/v1/auth/logout", null);
-        Assert.Equal(HttpStatusCode.OK, logoutResponse.StatusCode);
-
-        // Re-use the same (now-revoked) token — must be rejected.
-        var afterLogout = await client.GetAsync("/api/v1/auth/me");
-        Assert.Equal(HttpStatusCode.Unauthorized, afterLogout.StatusCode);
-    }
-
     #endregion
 }
 

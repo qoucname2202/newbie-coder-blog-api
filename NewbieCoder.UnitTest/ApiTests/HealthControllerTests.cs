@@ -20,9 +20,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
     static TestWebApplicationFactory()
     {
-        // Set JWT env vars before Program.Main runs (Env.Load in Program.cs would miss
-        // .env because AppContext.BaseDirectory differs between API and test projects).
-        // Ensure uploads directory exists so PhysicalFileProvider in UseStaticFiles doesn't throw.
         var uploadsDir = Path.Combine(AppContext.BaseDirectory, "uploads");
         Directory.CreateDirectory(uploadsDir);
 
@@ -37,8 +34,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Test");
 
-        // Set environment variables on the builder BEFORE the host is built.
-        // This makes them available when Program.Main runs (which is part of host startup).
         builder.UseSetting("JwtSettings__Secret", "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!");
         builder.UseSetting("JwtSettings__Issuer", "NewbieCoderAPI");
         builder.UseSetting("JwtSettings__Audience", "NewbieCoderClient");
@@ -68,7 +63,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             foreach (var d in rateLimitDescriptors) services.Remove(d);
             services.AddSingleton<IAuthRateLimitService>(_rateLimit);
 
-            // Override JwtMiddlewareSettings — if already registered, replace it with test values.
+            // Override JwtMiddlewareSettings.
             var jwtSettingsDescriptor = services.SingleOrDefault(sd => sd.ServiceType == typeof(JwtMiddlewareSettings));
             if (jwtSettingsDescriptor != null) services.Remove(jwtSettingsDescriptor);
             services.AddSingleton(new JwtMiddlewareSettings

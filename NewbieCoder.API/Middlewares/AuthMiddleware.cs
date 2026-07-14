@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using NewbieCoder.Core.Interfaces.Services;
 
 namespace NewbieCoder.API.Middlewares;
 
@@ -36,7 +37,7 @@ public sealed class AuthMiddleware
                 if (principal != null)
                 {
                     // Only enforce revocation check when IAuthService is available (not in all test scenarios).
-                    var authService = context.RequestServices.GetService<Core.Interfaces.Services.IAuthService>();
+                    var authService = context.RequestServices.GetService<IAuthService>();
                     if (authService == null || !authService.IsTokenRevoked(token))
                     {
                         context.User = principal;
