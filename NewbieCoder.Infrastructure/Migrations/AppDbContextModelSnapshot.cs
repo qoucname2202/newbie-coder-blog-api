@@ -1342,6 +1342,11 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("deleted_by");
 
+                    b.Property<string>("DisplayTitle")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("display_title");
+
                     b.Property<DateTimeOffset>("EffDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -1447,6 +1452,11 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("username");
 
+                    b.Property<string>("WebsiteUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("website_url");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DeletedAt")
@@ -1477,6 +1487,7 @@ namespace NewbieCoder.Infrastructure.Migrations
                             t.HasCheckConstraint("ck_users_reputation", "reputation_score IS NULL OR reputation_score <= 100");
 
                             t.HasCheckConstraint("ck_users_status", "status IN ('ACT','INACT','BAN','CLS','LOCKED')");
+                            t.HasCheckConstraint("ck_users_status", "status IN ('ACT','INACT','BAN','CLS')");
                         });
                 });
 

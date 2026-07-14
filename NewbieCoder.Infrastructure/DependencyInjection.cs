@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using NewbieCoder.Core.Interfaces.Repositories;
 using NewbieCoder.Core.Interfaces.Services;
 using NewbieCoder.Infrastructure.Data;
+using NewbieCoder.Infrastructure.Repositories;
 using NewbieCoder.Infrastructure.Services;
 using NewbieCoder.Infrastructure.UnitOfWork;
 
@@ -25,6 +27,7 @@ public static class DependencyInjection
                     b.EnableRetryOnFailure(
                         maxRetryCount: 5,
                         maxRetryDelay: TimeSpan.FromSeconds(10),
+                        maxRetryDelay: TimeSpan.FromSeconds(30),
                         errorCodesToAdd: null);
                 }));
 
@@ -35,6 +38,8 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasherService, PasswordHasherService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService>(sp =>
             new AuthService(
                 sp.GetRequiredService<AppDbContext>(),
@@ -42,6 +47,13 @@ public static class DependencyInjection
                 sp.GetRequiredService<IPasswordHasherService>(),
                 sp.GetRequiredService<IAuthRateLimitService>(),
                 sp.GetRequiredService<IAuditLogService>()));
+
+        services.AddScoped<IUserProfileService, UserProfileService>();
+        // User management services
+        services.AddScoped<IUserService, UserService>();
+        // File upload service
+  
+        services.AddScoped<IFileUploadService, FileUploadService>();
 
         return services;
     }

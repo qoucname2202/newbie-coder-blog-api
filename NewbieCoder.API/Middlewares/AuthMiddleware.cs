@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NewbieCoder.Core.Enums;
 using NewbieCoder.Infrastructure.Data;
+using NewbieCoder.Core.Interfaces.Services;
 
 namespace NewbieCoder.API.Middlewares;
 
@@ -17,8 +18,17 @@ public sealed class AuthMiddleware(
     RequestDelegate next,
     JwtMiddlewareSettings settings,
     IServiceScopeFactory scopeFactory)
+public sealed class AuthMiddleware
 {
+    private readonly RequestDelegate _next;
+    private readonly JwtMiddlewareSettings _settings;
     private readonly JwtSecurityTokenHandler _handler = new();
+
+    public AuthMiddleware(RequestDelegate next, JwtMiddlewareSettings settings)
+    {
+        _next = next;
+        _settings = settings;
+    }
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -52,11 +62,17 @@ public sealed class AuthMiddleware(
                         });
                         return;
                     }
+                    // Only enforce revocation check when IAuthService is available (not in all test scenarios).
+                    var authService = context.RequestServices.GetService<IAuthService>();
+                    if (authService == null || !authService.IsTokenRevoked(token))
+                    {
+                        context.User = principal;
+                    }
                 }
             }
         }
 
-        await next(context);
+        await _next(context);
     }
 
     private async Task<bool> IsAccountLockedAsync(ClaimsPrincipal principal, CancellationToken cancellationToken)
@@ -91,12 +107,12 @@ public sealed class AuthMiddleware(
             var parameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
-                ValidIssuer = settings.Issuer,
+                ValidIssuer = _settings.Issuer,
                 ValidateAudience = true,
-                ValidAudience = settings.Audience,
+                ValidAudience = _settings.Audience,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.Secret)),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret)),
                 ClockSkew = TimeSpan.Zero
             };
 

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NewbieCoder.API.Middlewares;
 using NewbieCoder.Core.Interfaces.Services;
 using NewbieCoder.Infrastructure.Data;
 using NewbieCoder.Infrastructure.Services;
@@ -17,14 +18,25 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly TestRateLimitService _rateLimit = new();
 
+    static TestWebApplicationFactory()
+    {
+        var uploadsDir = Path.Combine(AppContext.BaseDirectory, "uploads");
+        Directory.CreateDirectory(uploadsDir);
+
+        Environment.SetEnvironmentVariable("JwtSettings__Secret", "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!");
+        Environment.SetEnvironmentVariable("JwtSettings__Issuer", "NewbieCoderAPI");
+        Environment.SetEnvironmentVariable("JwtSettings__Audience", "NewbieCoderClient");
+    }
+
     public TestRateLimitService RateLimitService => _rateLimit;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        Environment.SetEnvironmentVariable("JwtSettings__Secret", "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!");
-        Environment.SetEnvironmentVariable("JwtSettings__Issuer", "NewbieCoderAPI");
-        Environment.SetEnvironmentVariable("JwtSettings__Audience", "NewbieCoderClient");
-        builder.UseEnvironment("Development");
+        builder.UseEnvironment("Test");
+
+        builder.UseSetting("JwtSettings__Secret", "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!");
+        builder.UseSetting("JwtSettings__Issuer", "NewbieCoderAPI");
+        builder.UseSetting("JwtSettings__Audience", "NewbieCoderClient");
 
         builder.ConfigureAppConfiguration(config =>
         {
@@ -50,6 +62,16 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             var rateLimitDescriptors = services.Where(sd => sd.ServiceType == typeof(IAuthRateLimitService)).ToList();
             foreach (var d in rateLimitDescriptors) services.Remove(d);
             services.AddSingleton<IAuthRateLimitService>(_rateLimit);
+
+            // Override JwtMiddlewareSettings.
+            var jwtSettingsDescriptor = services.SingleOrDefault(sd => sd.ServiceType == typeof(JwtMiddlewareSettings));
+            if (jwtSettingsDescriptor != null) services.Remove(jwtSettingsDescriptor);
+            services.AddSingleton(new JwtMiddlewareSettings
+            {
+                Secret = "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!",
+                Issuer = "NewbieCoderAPI",
+                Audience = "NewbieCoderClient"
+            });
         });
     }
 
