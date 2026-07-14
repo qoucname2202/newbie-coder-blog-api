@@ -24,6 +24,10 @@ public static class DependencyInjection
                 {
                     b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
                     b.CommandTimeout(30);
+                    b.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(30),
+                        errorCodesToAdd: null);
                 }));
 
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
@@ -42,6 +46,7 @@ public static class DependencyInjection
                 sp.GetRequiredService<IAuthRateLimitService>(),
                 sp.GetRequiredService<IAuditLogService>()));
 
+        services.AddScoped<IUserProfileService, UserProfileService>();
         // User management services
         services.AddScoped<IUserService, UserService>();
         // File upload service

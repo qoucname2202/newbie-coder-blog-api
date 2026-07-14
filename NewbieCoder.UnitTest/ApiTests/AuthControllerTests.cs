@@ -251,7 +251,7 @@ public class AuthControllerTests : IClassFixture<AuthWebApplicationFactory>
     [Fact]
     public async Task GetMe_WithoutToken_Returns401()
     {
-        var response = await _client.GetAsync("/api/v1/auth/me");
+        var response = await _client.GetAsync("/api/v1/users/me");
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 

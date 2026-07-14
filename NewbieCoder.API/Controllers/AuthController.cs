@@ -14,7 +14,7 @@ using NewbieCoder.Infrastructure.Services;
 namespace NewbieCoder.API.Controllers;
 
 /// <summary>
-/// Handles authentication operations: login, logout, token refresh, and current user profile.
+/// Handles authentication operations: login, logout, and token refresh.
 /// </summary>
 [ApiController]
 [Route("api/v1/auth")]
