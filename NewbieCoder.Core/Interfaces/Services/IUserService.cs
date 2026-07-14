@@ -21,6 +21,8 @@ public interface IUserService
         long createdByUserId,
         string? ipAddress,
         string? userAgent,
+        CancellationToken cancellationToken = default);
+
     Task<PaginatedResponse<UserListItemResponse>> GetUsersAsync(
         UserFilterRequest filter,
         CancellationToken cancellationToken = default);

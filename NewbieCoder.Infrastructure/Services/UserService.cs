@@ -6,6 +6,7 @@ using NewbieCoder.Core.Entities;
 using NewbieCoder.Core.Enums;
 using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.Interfaces.Services;
+using NewbieCoder.Core.ViewModels;
 using NewbieCoder.Infrastructure.Data;
 
 namespace NewbieCoder.Infrastructure.Services;
@@ -230,6 +231,87 @@ public sealed class UserService : IUserService
 
     #endregion
 
+    #region GetUsersAsync
+
+    /// <inheritdoc />
+    public async Task<PaginatedResponse<UserListItemResponse>> GetUsersAsync(
+        UserFilterRequest filter,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.Users.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(filter.Keyword))
+        {
+            var keyword = filter.Keyword.Trim().ToLowerInvariant();
+            query = query.Where(u =>
+                EF.Functions.Like(u.Email.ToLower(), $"%{keyword}%") ||
+                EF.Functions.Like(u.Username.ToLower(), $"%{keyword}%") ||
+                EF.Functions.Like(u.FullName.ToLower(), $"%{keyword}%"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Status))
+            query = query.Where(u => u.Status.ToString() == filter.Status);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        query = filter.SortBy?.ToLowerInvariant() switch
+        {
+            "email" => filter.SortDirection == "asc"
+                ? query.OrderBy(u => u.Email)
+                : query.OrderByDescending(u => u.Email),
+            "username" => filter.SortDirection == "asc"
+                ? query.OrderBy(u => u.Username)
+                : query.OrderByDescending(u => u.Username),
+            "fullname" => filter.SortDirection == "asc"
+                ? query.OrderBy(u => u.FullName)
+                : query.OrderByDescending(u => u.FullName),
+            "createdat" => filter.SortDirection == "asc"
+                ? query.OrderBy(u => u.EffDate)
+                : query.OrderByDescending(u => u.EffDate),
+            "lastloginat" => filter.SortDirection == "asc"
+                ? query.OrderBy(u => u.LastLoginAt)
+                : query.OrderByDescending(u => u.LastLoginAt),
+            _ => query.OrderByDescending(u => u.EffDate)
+        };
+
+        var page = filter.Page < 1 ? 1 : filter.Page;
+        var pageSize = filter.PageSize < 1 ? 10 : filter.PageSize > 100 ? 100 : filter.PageSize;
+
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(u => new UserListItemResponse
+            {
+                Id = u.Id,
+                FullName = u.FullName,
+                Username = u.Username,
+                Email = u.Email,
+                AvatarUrl = u.AvatarUrl,
+                DisplayTitle = null,
+                Bio = u.Bio,
+                WebsiteUrl = u.WebsiteUrl,
+                Status = u.Status.ToString(),
+                Role = "", // resolved separately via UserRole join if needed
+                CreatedAt = u.EffDate,
+                UpdatedAt = u.DateLastMaint,
+                LastLoginAt = u.LastLoginAt
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PaginatedResponse<UserListItemResponse>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
+            HasNextPage = page * pageSize < totalCount,
+            HasPreviousPage = page > 1
+        };
+    }
+
+    #endregion
+
     #region Transaction helper
 
     private async Task<T> ExecuteInTransactionAsync<T>(
@@ -256,55 +338,4 @@ public sealed class UserService : IUserService
     }
 
     #endregion
-using NewbieCoder.Core.DTOs.Request.Admin;
-using NewbieCoder.Core.DTOs.Response.Admin;
-using NewbieCoder.Core.Interfaces.Repositories;
-using NewbieCoder.Core.Interfaces.Services;
-using NewbieCoder.Core.ViewModels;
-
-namespace NewbieCoder.Infrastructure.Services;
-
-public sealed class UserService : IUserService
-{
-    private readonly IUserRepository _userRepository;
-
-    public UserService(IUserRepository userRepository)
-    {
-        _userRepository = userRepository;
-    }
-
-    public async Task<PaginatedResponse<UserListItemResponse>> GetUsersAsync(
-        UserFilterRequest filter,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await _userRepository.GetUsersAsync(filter, cancellationToken);
-
-        var items = result.Items.Select(u => new UserListItemResponse
-        {
-            Id = u.Id,
-            FullName = u.FullName,
-            Username = u.Username,
-            Email = u.Email,
-            AvatarUrl = u.AvatarUrl,
-            DisplayTitle = null,
-            Bio = u.Bio,
-            WebsiteUrl = u.WebsiteUrl,
-            Status = u.Status,
-            Role = u.Role,
-            CreatedAt = u.CreatedAt,
-            UpdatedAt = u.UpdatedAt,
-            LastLoginAt = u.LastLoginAt
-        }).ToList();
-
-        return new PaginatedResponse<UserListItemResponse>
-        {
-            Items = items,
-            Page = result.Page,
-            PageSize = result.PageSize,
-            TotalCount = result.TotalCount,
-            TotalPages = result.TotalPages,
-            HasNextPage = result.HasNextPage,
-            HasPreviousPage = result.HasPreviousPage
-        };
-    }
 }
