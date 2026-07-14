@@ -25,4 +25,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Exclude pre-existing EF migration stubs that conflict with raw SQL scripts -->
+  <ItemGroup>
+    <Compile Remove="Migrations\**" />
+  </ItemGroup>
+
+  <!-- Include SQL migration as content (not compiled) -->
+  <ItemGroup>
+    <None Include="Data\Migrations\20260713_AddUserLockoutFields.sql" />
+  </ItemGroup>
+
 </Project>

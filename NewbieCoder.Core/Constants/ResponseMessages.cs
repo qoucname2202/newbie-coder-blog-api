@@ -19,4 +19,20 @@ public static class ResponseMessages
     public const string SessionNotFound = "Session not found or has expired.";
     public const string Unauthenticated = "Please log in to continue.";
     public const string UserNotFound = "Account does not exist.";
+
+    // User lockout
+    public const string UserLocked           = "Your account has been locked.";
+    public const string UserAlreadyLocked    = "Account is already locked.";
+    public const string CannotLockSelf       = "You cannot lock your own account.";
+    public const string CannotLockSuperAdmin = "Cannot lock a super admin account.";
+    public const string InvalidLockUntil     = "Lock expiration time must be in the future.";
+    public const string CannotUnlockUser     = "You do not have permission to unlock this account.";
+    public const string UserNotLocked        = "Account is not currently locked.";
+    public const string LockReasonEmpty   = "Lock reason cannot be empty or contain only whitespace.";
+    public const string LockReasonTooShort = "Lock reason must be at least 5 characters.";
+    public const string LockReasonTooLong  = "Lock reason must not exceed 500 characters.";
+    public const string CannotLockDeleted  = "Cannot lock a deleted account.";
+    public const string CannotUnlockDeleted = "Cannot unlock a deleted account.";
+    public const string LockSucceeded      = "User account locked successfully.";
+    public const string UnlockSucceeded    = "User account unlocked successfully.";
 }

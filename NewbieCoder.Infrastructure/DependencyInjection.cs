@@ -22,6 +22,10 @@ public static class DependencyInjection
                 {
                     b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
                     b.CommandTimeout(30);
+                    b.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorCodesToAdd: null);
                 }));
 
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
@@ -30,6 +34,7 @@ public static class DependencyInjection
         services.AddSingleton<IAuthRateLimitService, AuthRateLimitService>();
         services.AddScoped<IPasswordHasherService, PasswordHasherService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<IAuthService>(sp =>
             new AuthService(
                 sp.GetRequiredService<AppDbContext>(),

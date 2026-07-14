@@ -25,6 +25,19 @@ public static class ResponseCodes
     public const string DeviceBlocked = "00010405";
     public const string DefaultRoleNotFound = "00010406";
 
+    // User lockout
+    public const string UserAlreadyLocked    = "00020401";
+    public const string CannotLockSelf       = "00020402";
+    public const string CannotLockSuperAdmin = "00020403";
+    public const string InvalidLockUntil     = "00020404";
+    public const string UserLocked           = "00020405";
+    public const string CannotUnlockUser     = "00020406";
+    public const string UserNotLocked        = "00020407";
+    public const string LockReasonTooShort   = "00020408";
+    public const string LockReasonTooLong    = "00020409";
+    public const string CannotLockDeleted    = "00020410";
+    public const string CannotUnlockDeleted  = "00020411";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>
@@ -59,6 +72,17 @@ public static class ResponseCodes
         TermsNotAccepted => HttpStatusCodes.BadRequest,
         DeviceBlocked => HttpStatusCodes.Forbidden,
         DefaultRoleNotFound => HttpStatusCodes.InternalServerError,
+        UserAlreadyLocked => HttpStatusCodes.Conflict,
+        CannotLockSelf => HttpStatusCodes.Forbidden,
+        CannotLockSuperAdmin => HttpStatusCodes.Forbidden,
+        InvalidLockUntil => HttpStatusCodes.BadRequest,
+        UserLocked => HttpStatusCodes.Forbidden,
+        CannotUnlockUser => HttpStatusCodes.Forbidden,
+        UserNotLocked => HttpStatusCodes.Conflict,
+        LockReasonTooShort => HttpStatusCodes.BadRequest,
+        LockReasonTooLong => HttpStatusCodes.BadRequest,
+        CannotLockDeleted => HttpStatusCodes.Conflict,
+        CannotUnlockDeleted => HttpStatusCodes.Conflict,
         _ => HttpStatusCodes.InternalServerError
     };
 }

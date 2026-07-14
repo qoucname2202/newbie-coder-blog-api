@@ -69,7 +69,6 @@ public class HealthControllerTests : IClassFixture<TestWebApplicationFactory>
     public async Task Get_ReturnsOk()
     {
         var response = await _client.GetAsync("/api/health");
-
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 }

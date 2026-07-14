@@ -13,4 +13,4 @@ public enum SessionStatus          { Active = 1, Expired = 2, Revoked = 3 }
 public enum SortDirection          { Asc, Desc }
 public enum TokenStatus            { Active = 1, Used = 2, Revoked = 3, Expired = 4 }
 public enum UserRoleStatus         { Active = 1, Revoked = 2, Expired = 3 }
-public enum UserStatus             { Active = 1, Inactive = 2, Banned = 3, Closed = 4 }
+public enum UserStatus             { Active = 1, Inactive = 2, Banned = 3, Closed = 4, Locked = 5 }

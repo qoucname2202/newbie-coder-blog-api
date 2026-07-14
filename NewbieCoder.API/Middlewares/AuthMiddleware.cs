@@ -1,17 +1,22 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using NewbieCoder.Core.Enums;
+using NewbieCoder.Infrastructure.Data;
 
 namespace NewbieCoder.API.Middlewares;
 
 /// <summary>
 /// Validates the JWT Bearer token on incoming requests and populates HttpContext.User.
 /// Must be registered after UseRouting and before the authorization middleware / controllers.
+/// Also checks if the authenticated user account has been locked and rejects the request if so.
 /// </summary>
 public sealed class AuthMiddleware(
     RequestDelegate next,
-    JwtMiddlewareSettings settings)
+    JwtMiddlewareSettings settings,
+    IServiceScopeFactory scopeFactory)
 {
     private readonly JwtSecurityTokenHandler _handler = new();
 
@@ -29,12 +34,54 @@ public sealed class AuthMiddleware(
                 var principal = TryValidateToken(token);
                 if (principal != null)
                 {
-                    context.User = principal;
+                    // Check if account is locked before allowing the request to proceed
+                    if (!await IsAccountLockedAsync(principal, context.RequestAborted))
+                    {
+                        context.User = principal;
+                    }
+                    else
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        await context.Response.WriteAsJsonAsync(new
+                        {
+                            responseStatus = new
+                            {
+                                responseCode = "00020405",
+                                responseMessage = "Your account has been locked."
+                            }
+                        });
+                        return;
+                    }
                 }
             }
         }
 
         await next(context);
+    }
+
+    private async Task<bool> IsAccountLockedAsync(ClaimsPrincipal principal, CancellationToken cancellationToken)
+    {
+        var subClaim = principal.FindFirst(JwtRegisteredClaimNames.Sub)
+                      ?? principal.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (subClaim == null || !long.TryParse(subClaim.Value, out var userId))
+            return false;
+
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var user = await db.Users
+            .AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.Status })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (user == null)
+            return true;
+
+        // Admin lock has no expiry — if status is Locked, reject the request.
+        // Unlock is performed exclusively via the AdminUsersController endpoint.
+        return user.Status == UserStatus.Locked;
     }
 
     private ClaimsPrincipal? TryValidateToken(string token)

@@ -90,6 +90,13 @@ public sealed partial class AuthService : IAuthService
         {
             case UserStatus.Active:
                 break;
+            case UserStatus.Locked:
+                // Admin lock has no expiry — record failed history and reject
+                await RecordFailedHistoryAsync(
+                    user.Id, normalizedLoginId, null, null, ipAddress, userAgent,
+                    AuthConstants.LoginHistoryConstants.ReasonBlockedUser, cancellationToken);
+                AuthConstants.Helpers.ThrowUserBlocked();
+                return null!;
             case UserStatus.Banned:
                 await RecordFailedHistoryAsync(
                     user.Id, normalizedLoginId, null, null, ipAddress, userAgent,
