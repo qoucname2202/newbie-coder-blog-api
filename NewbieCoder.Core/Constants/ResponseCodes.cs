@@ -21,6 +21,13 @@ public static class ResponseCodes
     public const string EmptyUpdateBody = "00000401";
     public const string InvalidUpdateField = "00000402";
     public const string UsernameAlreadyExists = "00000409";
+    // Registration
+    public const string EmailAlreadyExists = "00010401";
+    public const string UsernameAlreadyExists = "00010402";
+    public const string PasswordTooWeak = "00010403";
+    public const string TermsNotAccepted = "00010404";
+    public const string DeviceBlocked = "00010405";
+    public const string DefaultRoleNotFound = "00010406";
 
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
@@ -53,6 +60,12 @@ public static class ResponseCodes
         EmptyUpdateBody => HttpStatusCodes.BadRequest,
         InvalidUpdateField => HttpStatusCodes.BadRequest,
         UsernameAlreadyExists => HttpStatusCodes.Conflict,
+        EmailAlreadyExists => HttpStatusCodes.Conflict,
+        UsernameAlreadyExists => HttpStatusCodes.Conflict,
+        PasswordTooWeak => HttpStatusCodes.BadRequest,
+        TermsNotAccepted => HttpStatusCodes.BadRequest,
+        DeviceBlocked => HttpStatusCodes.Forbidden,
+        DefaultRoleNotFound => HttpStatusCodes.InternalServerError,
         _ => HttpStatusCodes.InternalServerError
     };
 }

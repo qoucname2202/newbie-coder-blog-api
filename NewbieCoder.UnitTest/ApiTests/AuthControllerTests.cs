@@ -319,6 +319,20 @@ public sealed class TestAuthService : IAuthService
             WebsiteUrl = null,
             Status = "ACTIVE",
             UpdatedAt = DateTimeOffset.UtcNow
+    public Task<RegisterResponse> RegisterAsync(
+        RegisterRequest request,
+        string? deviceId,
+        string? deviceName,
+        string? deviceType,
+        string? userAgent,
+        string? ipAddress,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(new RegisterResponse
+        {
+            AccessToken = "test-access",
+            TokenType = "Bearer",
+            ExpiresIn = 900,
+            Scope = "read write"
         });
 
     public string GenerateAccessToken(
