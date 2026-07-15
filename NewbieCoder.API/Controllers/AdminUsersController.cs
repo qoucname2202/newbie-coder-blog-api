@@ -14,15 +14,12 @@ using NewbieCoder.Core.ViewModels;
 namespace NewbieCoder.API.Controllers;
 
 /// <summary>
-/// Admin user management endpoints. All actions require Admin or equivalent role.
-/// Admin endpoints for managing users in the system.
-/// All endpoints require Admin role.
+/// Admin user management endpoints. All actions require Admin role.
 /// </summary>
 [ApiController]
 [Route("api/admin/users")]
 [Produces("application/json")]
 [Tags("Admin - User Management")]
-[Tags("Admin - Users")]
 [Authorize]
 [RequiresRole(RoleConstants.Admin)]
 public sealed class AdminUsersController : ControllerBase
@@ -32,6 +29,44 @@ public sealed class AdminUsersController : ControllerBase
     public AdminUsersController(IUserService userService)
     {
         _userService = userService;
+    }
+
+    /// <summary>
+    /// Creates a new user account. Only Admin role can access this endpoint.
+    /// </summary>
+    /// <param name="request">User creation data.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The created user data.</returns>
+    [HttpPost]
+    [ProducesResponseType(typeof(ApiResponse<CreateUserResponse>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> CreateUser(
+        [FromBody] CreateUserRequest request,
+        CancellationToken cancellationToken)
+    {
+        var trace = HttpContext.GetRequestTrace();
+        var requesterId = GetRequiredUserId();
+        var ipAddress = GetClientIp();
+        var userAgent = Request.Headers.UserAgent.FirstOrDefault();
+
+        var result = await _userService.CreateUserAsync(
+            request,
+            requesterId,
+            ipAddress,
+            userAgent,
+            cancellationToken);
+
+        return StatusCode(
+            HttpStatusCodes.Created,
+            ApiResponse<CreateUserResponse>.Success(
+                result,
+                trace,
+                UserManagementResponseMessages.UserCreatedSuccess));
     }
 
     /// <summary>
@@ -54,6 +89,19 @@ public sealed class AdminUsersController : ControllerBase
     public async Task<IActionResult> UpdateUser(
         [FromRoute] long userId,
         [FromBody] UpdateUserRequest request,
+        CancellationToken cancellationToken)
+    {
+        var trace = HttpContext.GetRequestTrace();
+
+        var result = await _userService.UpdateUserAsync(userId, request, cancellationToken);
+
+        return Ok(ApiResponse<UpdateUserResponse>.Success(
+            result,
+            trace,
+            ResponseMessages.UserUpdatedSuccess));
+    }
+
+    /// <summary>
     /// Returns a paginated list of all user accounts in the system.
     /// Only accessible by users with the Admin role.
     /// </summary>
@@ -70,12 +118,6 @@ public sealed class AdminUsersController : ControllerBase
     {
         var trace = HttpContext.GetRequestTrace();
 
-        var result = await _userService.UpdateUserAsync(userId, request, cancellationToken);
-
-        return Ok(ApiResponse<UpdateUserResponse>.Success(
-            result,
-            trace,
-            ResponseMessages.UserUpdatedSuccess));
         var result = await _userService.GetUsersAsync(filter, cancellationToken);
 
         return Ok(ApiResponse<PaginatedResponse<UserListItemResponse>>.Success(
@@ -83,4 +125,29 @@ public sealed class AdminUsersController : ControllerBase
             trace,
             AdminUsersResponseMessages.UsersRetrieved));
     }
+
+    #region Private helpers
+
+    private long GetRequiredUserId()
+    {
+        var userId = User.GetUserId();
+        if (userId == null)
+            throw new BusinessException(
+                ResponseMessages.Unauthenticated,
+                statusCode: HttpStatusCodes.Unauthorized,
+                responseCode: ResponseCodes.Unauthorized);
+
+        return userId.Value;
+    }
+
+    private string? GetClientIp()
+    {
+        var forwarded = Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(forwarded))
+            return forwarded.Split(',', StringSplitOptions.RemoveEmptyEntries)[0].Trim();
+
+        return HttpContext.Connection.RemoteIpAddress?.ToString();
+    }
+
+    #endregion
 }

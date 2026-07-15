@@ -11,6 +11,8 @@ public interface IUserService
     Task<UpdateUserResponse> UpdateUserAsync(
         long userId,
         UpdateUserRequest request,
+        CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Creates a new user account with the specified role.
     /// Admin role can only be assigned through role promotion, not during creation.

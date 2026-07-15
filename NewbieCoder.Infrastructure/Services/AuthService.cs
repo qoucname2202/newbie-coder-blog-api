@@ -1079,7 +1079,6 @@ public sealed partial class AuthService : IAuthService
                 RegisterResponseMessages.UsernameAlreadyExists,
                 statusCode: HttpStatusCodes.Conflict,
                 responseCode: ResponseCodes.UsernameAlreadyExistsAuth);
-                responseCode: ResponseCodes.UserUsernameAlreadyExists);
 
         // Password strength: uppercase, lowercase, digit, special char.
         if (!IsPasswordStrong(request.Password!, out var strengthError))

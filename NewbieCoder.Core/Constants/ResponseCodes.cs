@@ -36,15 +36,13 @@ public static class ResponseCodes
     public const string UsernameAlreadyExistsUser = "00020402";
     public const string RoleNotFound = "00020403";
     public const string InvalidUserStatus = "00020404";
-    public const string InvalidLogoutReason = "00020401";
-    public const string SessionAlreadyRevoked = "00020402";
-    public const string InvalidRefreshToken = "00020403";
-
-    // User management
-    public const string UserAlreadyExists     = "00030401";
-    public const string RoleNotFound           = "00030402";
-    public const string CannotCreateAdminUser  = "00030403";
-    public const string UserCreateFailed       = "00030404";
+    public const string InvalidLogoutReason = "00020501";
+    public const string SessionAlreadyRevoked = "00020502";
+    public const string InvalidRefreshToken = "00020503";
+    public const string EmailAlreadyExists = "00020504";
+    public const string UserAlreadyExists = "00020505";
+    public const string CannotCreateAdminUser = "00020506";
+    public const string UserCreateFailed = "00020507";
 
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
@@ -92,7 +90,6 @@ public static class ResponseCodes
         RoleNotFound => HttpStatusCodes.NotFound,
         InvalidUserStatus => HttpStatusCodes.BadRequest,
         UserAlreadyExists => HttpStatusCodes.Conflict,
-        RoleNotFound => HttpStatusCodes.NotFound,
         CannotCreateAdminUser => HttpStatusCodes.Forbidden,
         UserCreateFailed => HttpStatusCodes.InternalServerError,
         _ => HttpStatusCodes.InternalServerError
