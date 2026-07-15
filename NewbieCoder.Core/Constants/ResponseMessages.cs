@@ -20,6 +20,13 @@ public static class ResponseMessages
     public const string SessionRevoked = "This session has been revoked.";
     public const string Unauthenticated = "Please log in to continue.";
     public const string UserNotFound = "Account does not exist.";
+
+    // User management
+    public const string UserUpdatedSuccess = "User account updated successfully.";
+    public const string EmailAlreadyExists = "Email address is already in use.";
+    public const string UsernameAlreadyExists = "Username is already taken.";
+    public const string RoleNotFound = "The specified role does not exist.";
+    public const string InvalidUserStatus = "Invalid user status.";
     public const string ProfileSuccess = "Profile retrieved successfully.";
     public const string SessionAlreadyRevoked = "Session has already been revoked.";
     public const string InvalidLogoutReason = "Invalid logout_reason value.";
@@ -29,6 +36,5 @@ public static class ResponseMessages
     public const string InvalidUpdateField = "One or more fields are not allowed to be updated via this endpoint.";
     public const string UpdateProfileSuccess = "Cập nhật thông tin cá nhân thành công";
     public const string UpdateValidationFailed = "Dữ liệu cập nhật không hợp lệ";
-    public const string UsernameAlreadyExists = "Username này đã được sử dụng.";
     public const string SessionInvalid = "Phiên đăng nhập không hợp lệ.";
 }

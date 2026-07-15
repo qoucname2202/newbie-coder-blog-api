@@ -46,6 +46,8 @@ public static class DependencyInjection
                 sp.GetRequiredService<IAuthRateLimitService>(),
                 sp.GetRequiredService<IAuditLogService>()));
 
+        // User management services
+        services.AddScoped<IUserService, UserService>();
         services.AddScoped<IUserProfileService, UserProfileService>();
         // User management services
         services.AddScoped<IUserService, UserService>();
