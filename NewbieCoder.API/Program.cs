@@ -56,6 +56,8 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await FixDatabaseConstraintsAsync(db);
+}
+
 // Auto-apply any pending schema changes on startup (idempotent — skips if column already exists).
 // Retry up to 3 times with exponential backoff in case Neon is temporarily unreachable.
 async Task<bool> TrySchemaMigrate(AppDbContext db, int maxRetries = 3)

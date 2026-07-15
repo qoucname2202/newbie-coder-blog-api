@@ -23,11 +23,9 @@ public static class DependencyInjection
                 b =>
                 {
                     b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
-                    b.CommandTimeout(120);
                     b.CommandTimeout(30);
                     b.EnableRetryOnFailure(
                         maxRetryCount: 5,
-                        maxRetryDelay: TimeSpan.FromSeconds(10),
                         maxRetryDelay: TimeSpan.FromSeconds(30),
                         errorCodesToAdd: null);
                 }));

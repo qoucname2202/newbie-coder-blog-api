@@ -14,20 +14,18 @@ namespace NewbieCoder.API.Middlewares;
 /// Must be registered after UseRouting and before the authorization middleware / controllers.
 /// Also checks if the authenticated user account has been locked and rejects the request if so.
 /// </summary>
-public sealed class AuthMiddleware(
-    RequestDelegate next,
-    JwtMiddlewareSettings settings,
-    IServiceScopeFactory scopeFactory)
 public sealed class AuthMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly JwtMiddlewareSettings _settings;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly JwtSecurityTokenHandler _handler = new();
 
-    public AuthMiddleware(RequestDelegate next, JwtMiddlewareSettings settings)
+    public AuthMiddleware(RequestDelegate next, JwtMiddlewareSettings settings, IServiceScopeFactory scopeFactory)
     {
         _next = next;
         _settings = settings;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -83,7 +81,7 @@ public sealed class AuthMiddleware
         if (subClaim == null || !long.TryParse(subClaim.Value, out var userId))
             return false;
 
-        using var scope = scopeFactory.CreateScope();
+        using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var user = await db.Users

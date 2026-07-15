@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NewbieCoder.API.Attributes;
 using NewbieCoder.API.Extensions;
@@ -8,14 +7,13 @@ using NewbieCoder.Core.DTOs.Response.User;
 using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.DTOs.Request.Admin;
 using NewbieCoder.Core.DTOs.Response.Admin;
-using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.Interfaces.Services;
 using NewbieCoder.Core.ViewModels;
 
 namespace NewbieCoder.API.Controllers;
 
 /// <summary>
-/// Handles administrative user management operations: lock and unlock.
+/// Handles administrative user management operations: lock, unlock, create, update, and list.
 /// </summary>
 [ApiController]
 [Route("api/v1/admin/users")]
@@ -25,10 +23,12 @@ namespace NewbieCoder.API.Controllers;
 public sealed class AdminUsersController : ControllerBase
 {
     private readonly IUserManagementService _userManagement;
+    private readonly IUserService _userService;
 
-    public AdminUsersController(IUserManagementService userManagement)
+    public AdminUsersController(IUserManagementService userManagement, IUserService userService)
     {
         _userManagement = userManagement;
+        _userService = userService;
     }
 
     #region Lock
@@ -132,24 +132,8 @@ public sealed class AdminUsersController : ControllerBase
     }
 
     #endregion
-/// Admin endpoints for managing users in the system.
-/// All endpoints require Admin role.
-/// Admin user management endpoints. All actions require Admin role.
-/// </summary>
-[ApiController]
-[Route("api/admin/users")]
-[Produces("application/json")]
-[Tags("Admin - User Management")]
-[Authorize]
-[RequiresRole(RoleConstants.Admin)]
-public sealed class AdminUsersController : ControllerBase
-{
-    private readonly IUserService _userService;
 
-    public AdminUsersController(IUserService userService)
-    {
-        _userService = userService;
-    }
+    #region User management (Create, Update, List)
 
     /// <summary>
     /// Creates a new user account. Only Admin role can access this endpoint.
@@ -244,29 +228,6 @@ public sealed class AdminUsersController : ControllerBase
             result,
             trace,
             AdminUsersResponseMessages.UsersRetrieved));
-    }
-
-    #region Private helpers
-
-    private long GetRequiredUserId()
-    {
-        var userId = User.GetUserId();
-        if (userId == null)
-            throw new BusinessException(
-                ResponseMessages.Unauthenticated,
-                statusCode: HttpStatusCodes.Unauthorized,
-                responseCode: ResponseCodes.Unauthorized);
-
-        return userId.Value;
-    }
-
-    private string? GetClientIp()
-    {
-        var forwarded = Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrWhiteSpace(forwarded))
-            return forwarded.Split(',', StringSplitOptions.RemoveEmptyEntries)[0].Trim();
-
-        return HttpContext.Connection.RemoteIpAddress?.ToString();
     }
 
     #endregion

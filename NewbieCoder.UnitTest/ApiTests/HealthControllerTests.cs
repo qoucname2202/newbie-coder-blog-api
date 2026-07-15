@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using NewbieCoder.API.Middlewares;
+using NewbieCoder.Core.Entities;
+using NewbieCoder.Core.Enums;
 using NewbieCoder.Core.Interfaces.Services;
 using NewbieCoder.Infrastructure.Data;
 using NewbieCoder.Infrastructure.Services;
@@ -18,6 +21,16 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly TestRateLimitService _rateLimit = new();
 
+    /// <summary>
+    /// Static seed flag + lock ensures seeding runs exactly once across all factory subclasses and
+    /// all CreateHost calls, even when called concurrently by xUnit parallel test runners.
+    /// Static DB name ensures all subclasses share the same in-memory database,
+    /// so the seed from the first CreateHost call is visible to all factories and all tests.
+    /// </summary>
+    private static bool _seeded;
+    private static readonly object _seedLock = new();
+    private const string SharedInMemoryDbName = "TestBlogApiDb";
+
     static TestWebApplicationFactory()
     {
         var uploadsDir = Path.Combine(AppContext.BaseDirectory, "uploads");
@@ -29,6 +42,64 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     }
 
     public TestRateLimitService RateLimitService => _rateLimit;
+
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        var host = base.CreateHost(builder);
+
+        // Seed exactly once per test process (static lock prevents concurrent re-entry from
+        // parallel xUnit test runners). Without this, AuthMiddleware.IsAccountLockedAsync queries
+        // an empty in-memory DB and treats the token bearer as locked (returning 403 Forbidden).
+        lock (_seedLock)
+        {
+            if (_seeded) return host;
+            _seeded = true;
+
+            using var scope = host.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            if (!db.Users.Any())
+            {
+                db.Users.Add(new User
+                {
+                    Id = 1,
+                    Email = "test@example.com",
+                    Username = "testuser",
+                    FullName = "Test User",
+                    Password = "dummy-hash",
+                    Location = "Test City",
+                    Status = UserStatus.Active,
+                    EmailVerified = true,
+                    EffDate = DateTimeOffset.UtcNow,
+                    DateLastMaint = DateTimeOffset.UtcNow
+                });
+
+                db.Roles.Add(new Role
+                {
+                    Id = 1,
+                    Code = "USER",
+                    Name = "User",
+                    IsSystem = true,
+                    Status = RoleStatus.Active,
+                    EffDate = DateTimeOffset.UtcNow,
+                    DateLastMaint = DateTimeOffset.UtcNow
+                });
+
+                db.UserRoles.Add(new UserRole
+                {
+                    UserId = 1,
+                    RoleId = 1,
+                    Status = UserRoleStatus.Active,
+                    AssignedAt = DateTimeOffset.UtcNow,
+                    EffDate = DateTimeOffset.UtcNow,
+                    DateLastMaint = DateTimeOffset.UtcNow
+                });
+
+                db.SaveChanges();
+            }
+        }
+
+        return host;
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -49,14 +120,15 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            // Replace AppDbContext with in-memory database.
+            // Replace AppDbContext with in-memory database using the instance name so all scoped
+            // resolutions share the same database (required for CreateServer seed to be visible).
             var dbContextDescriptors = services.Where(sd =>
                 sd.ServiceType == typeof(AppDbContext) ||
                 (sd.ServiceType.IsGenericType && sd.ServiceType.GetGenericTypeDefinition() == typeof(DbContextOptions<>))
             ).ToList();
             foreach (var d in dbContextDescriptors) services.Remove(d);
             services.AddDbContext<AppDbContext>(options =>
-                options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+                options.UseInMemoryDatabase(SharedInMemoryDbName));
 
             // Remove real IAuthRateLimitService.
             var rateLimitDescriptors = services.Where(sd => sd.ServiceType == typeof(IAuthRateLimitService)).ToList();

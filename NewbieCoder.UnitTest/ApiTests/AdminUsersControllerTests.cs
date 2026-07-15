@@ -23,12 +23,14 @@ namespace NewbieCoder.UnitTest.ApiTests;
 public class AdminUsersControllerTests
 {
     private static AdminUsersController CreateController(
-        Mock<IUserManagementService>? mock = null,
+        Mock<IUserManagementService>? mockUserManagement = null,
+        Mock<IUserService>? mockUserService = null,
         long? userId = 99,
         IEnumerable<string>? roles = null)
     {
-        mock ??= new Mock<IUserManagementService>();
-        var ctrl = new AdminUsersController(mock.Object);
+        mockUserManagement ??= new Mock<IUserManagementService>();
+        mockUserService ??= new Mock<IUserService>();
+        var ctrl = new AdminUsersController(mockUserManagement.Object, mockUserService.Object);
 
         var claims = new List<Claim>
         {
