@@ -30,17 +30,17 @@ public sealed class RegisterRequest
 
     [Required(ErrorMessage = "Confirm password is required.")]
     [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
-    [JsonPropertyName("confirm_password")]
+    [JsonPropertyName("confirmPassword")]
     public string? ConfirmPassword { get; set; }
 
     [Required(ErrorMessage = "Full name is required.")]
     [MinLength(2, ErrorMessage = "Full name must be at least 2 characters.")]
     [MaxLength(150, ErrorMessage = "Full name must not exceed 150 characters.")]
-    [JsonPropertyName("full_name")]
+    [JsonPropertyName("FullName")]
     public string? FullName { get; set; }
 
     [Required(ErrorMessage = "You must accept the terms of service.")]
     [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the terms of service.")]
-    [JsonPropertyName("accept_terms")]
+    [JsonPropertyName("acceptTerms")]
     public bool AcceptTerms { get; set; }
 }

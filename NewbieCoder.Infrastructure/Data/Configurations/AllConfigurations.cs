@@ -52,6 +52,8 @@ public class UserConfig : IEntityTypeConfiguration<User>
         b.Property(x => x.FullName).HasColumnName("full_name").HasMaxLength(150).IsRequired();
         b.Property(x => x.AvatarUrl).HasColumnName("avatar_url").HasMaxLength(1000);
         b.Property(x => x.Bio).HasColumnName("bio").HasMaxLength(500);
+        b.Property(x => x.DisplayTitle).HasColumnName("display_title").HasMaxLength(100);
+        b.Property(x => x.WebsiteUrl).HasColumnName("website_url").HasMaxLength(2048);
         b.Property(x => x.Status).HasColumnName("status")
             .HasConversion(EnumStringConverters.UserStatusConverter)
             .HasDefaultValue(UserStatus.Inactive);
@@ -72,6 +74,7 @@ public class UserConfig : IEntityTypeConfiguration<User>
         b.Property(x => x.EmailVerified).HasColumnName("email_verified").HasDefaultValue(false);
         b.Property(x => x.EmailVerifiedAt).HasColumnName("email_verified_at");
         b.Property(x => x.LastLoginAt).HasColumnName("last_login_at");
+        b.Property(x => x.PasswordChangedAt).HasColumnName("password_changed_at");
 
         // Lockout fields
         b.Property(x => x.LockedAt).HasColumnName("locked_at");
@@ -838,5 +841,19 @@ public class AuditLogConfig : IEntityTypeConfiguration<AuditLog>
             .WithMany(d => d.AuditLogs)
             .HasForeignKey(x => x.DeviceId)
             .OnDelete(DeleteBehavior.SetNull);
+    }
+}
+
+// ============================================================
+// 24. seed_flags
+// ============================================================
+public class SeedFlagConfig : IEntityTypeConfiguration<SeedFlag>
+{
+    public void Configure(EntityTypeBuilder<SeedFlag> b)
+    {
+        b.ToTable("seed_flags");
+        b.HasKey(x => x.Key);
+        b.Property(x => x.Key).HasColumnName("key").HasMaxLength(255);
+        b.Property(x => x.SeededAt).HasColumnName("seeded_at");
     }
 }

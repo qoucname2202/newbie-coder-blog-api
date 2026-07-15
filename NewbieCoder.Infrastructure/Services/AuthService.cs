@@ -1074,7 +1074,7 @@ public sealed partial class AuthService : IAuthService
             throw new BusinessException(
                 RegisterResponseMessages.EmailAlreadyExists,
                 statusCode: HttpStatusCodes.Conflict,
-                responseCode: ResponseCodes.EmailAlreadyExists);
+                responseCode: ResponseCodes.EmailAlreadyExistsAuth);
 
         // Username uniqueness.
         var usernameExists = await _db.Users
@@ -1085,7 +1085,7 @@ public sealed partial class AuthService : IAuthService
             throw new BusinessException(
                 RegisterResponseMessages.UsernameAlreadyExists,
                 statusCode: HttpStatusCodes.Conflict,
-                responseCode: ResponseCodes.UserUsernameAlreadyExists);
+                responseCode: ResponseCodes.UsernameAlreadyExistsAuth);
 
         // Password strength: uppercase, lowercase, digit, special char.
         if (!IsPasswordStrong(request.Password!, out var strengthError))

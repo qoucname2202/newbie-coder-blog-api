@@ -1,3 +1,5 @@
+using NewbieCoder.Core.DTOs.Request.User;
+using NewbieCoder.Core.DTOs.Response.User;
 using NewbieCoder.Core.DTOs.Request.Admin;
 using NewbieCoder.Core.DTOs.Response.Admin;
 using NewbieCoder.Core.ViewModels;
@@ -6,6 +8,11 @@ namespace NewbieCoder.Core.Interfaces.Services;
 
 public interface IUserService
 {
+    Task<UpdateUserResponse> UpdateUserAsync(
+        long userId,
+        UpdateUserRequest request,
+        CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Creates a new user account with the specified role.
     /// Admin role can only be assigned through role promotion, not during creation.

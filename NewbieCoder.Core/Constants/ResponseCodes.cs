@@ -18,14 +18,23 @@ public static class ResponseCodes
     public const string SessionRevoked = "00000401S";
     public const string InternalError = "00000500";
 
+    // Password reset
+    public const string InvalidEmailFormat = "00000201";
+    public const string ResetTokenRequired = "00000201";
+    public const string InvalidOrExpiredResetToken = "00000201";
+    public const string ResetPasswordWeak = "00000206";
+    public const string PasswordNotMatch = "00000207";
+    public const string PasswordReused = "00000208";
+    public const string TooManyResetRequests = "00000429";
+    public const string EmailSendFailed = "00000500";
 
     // Update profile
     public const string EmptyUpdateBody = "00000401";
     public const string InvalidUpdateField = "00000402";
     public const string UserUsernameAlreadyExists = "00000409";
     // Registration
-    public const string EmailAlreadyExists = "00010401";
-    public const string UsernameAlreadyExists = "00010402";
+    public const string EmailAlreadyExistsAuth = "00010401";
+    public const string UsernameAlreadyExistsAuth = "00010402";
     public const string PasswordTooWeak = "00010403";
     public const string TermsNotAccepted = "00010404";
     public const string DeviceBlocked = "00010405";
@@ -48,10 +57,18 @@ public static class ResponseCodes
     public const string InvalidRefreshToken = "00020403";
 
     // User management
-    public const string UserAlreadyExists     = "00030401";
-    public const string RoleNotFound           = "00030402";
-    public const string CannotCreateAdminUser  = "00030403";
-    public const string UserCreateFailed       = "00030404";
+    public const string EmailAlreadyExistsUser = "00020401";
+    public const string UsernameAlreadyExistsUser = "00020402";
+    public const string RoleNotFound = "00020403";
+    public const string InvalidUserStatus = "00020404";
+    public const string InvalidLogoutReason = "00020501";
+    public const string SessionAlreadyRevoked = "00020502";
+    public const string InvalidRefreshToken = "00020503";
+    public const string EmailAlreadyExists = "00020504";
+    public const string UsernameAlreadyExists = "00020504";
+    public const string UserAlreadyExists = "00020505";
+    public const string CannotCreateAdminUser = "00020506";
+    public const string UserCreateFailed = "00020507";
 
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
@@ -83,10 +100,15 @@ public static class ResponseCodes
         TooManyRequests => HttpStatusCodes.TooManyRequests,
         SessionRevoked => HttpStatusCodes.Unauthorized,
         InternalError => HttpStatusCodes.InternalServerError,
+        EmailAlreadyExistsAuth => HttpStatusCodes.Conflict,
+        UsernameAlreadyExistsAuth => HttpStatusCodes.Conflict,
         InvalidLogoutReason => HttpStatusCodes.BadRequest,
         SessionAlreadyRevoked => HttpStatusCodes.Ok,
         InvalidRefreshToken => HttpStatusCodes.BadRequest,
         EmailAlreadyExists => HttpStatusCodes.Conflict,
+        ResetPasswordWeak => HttpStatusCodes.BadRequest,
+        PasswordNotMatch => HttpStatusCodes.BadRequest,
+        PasswordReused => HttpStatusCodes.BadRequest,
         UserUsernameAlreadyExists => HttpStatusCodes.Conflict,
         PasswordTooWeak => HttpStatusCodes.BadRequest,
         TermsNotAccepted => HttpStatusCodes.BadRequest,
@@ -104,7 +126,11 @@ public static class ResponseCodes
         CannotLockDeleted => HttpStatusCodes.Conflict,
         CannotUnlockDeleted => HttpStatusCodes.Conflict,
         UserAlreadyExists => HttpStatusCodes.Conflict,
+        EmailAlreadyExistsUser => HttpStatusCodes.Conflict,
+        UsernameAlreadyExistsUser => HttpStatusCodes.Conflict,
         RoleNotFound => HttpStatusCodes.NotFound,
+        InvalidUserStatus => HttpStatusCodes.BadRequest,
+        UserAlreadyExists => HttpStatusCodes.Conflict,
         CannotCreateAdminUser => HttpStatusCodes.Forbidden,
         UserCreateFailed => HttpStatusCodes.InternalServerError,
         _ => HttpStatusCodes.InternalServerError

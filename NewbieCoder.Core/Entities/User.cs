@@ -9,14 +9,14 @@ namespace NewbieCoder.Core.Entities
         public string FullName { get; set; } = null!;
         public string? AvatarUrl { get; set; }
         public string? Bio { get; set; }
+        public string? DisplayTitle { get; set; }
+        public string? WebsiteUrl { get; set; }
 
         public UserStatus Status { get; set; } = UserStatus.Inactive;
 
         public string? CoverUrl { get; set; }
         public string? GithubUrl { get; set; }
         public string? LinkedinUrl { get; set; }
-        public string? DisplayTitle { get; set; }
-        public string? WebsiteUrl { get; set; }
 
         public string Location { get; set; } = null!;
 
@@ -28,6 +28,7 @@ namespace NewbieCoder.Core.Entities
         public bool EmailVerified { get; set; }
         public DateTimeOffset? EmailVerifiedAt { get; set; }
         public DateTimeOffset? LastLoginAt { get; set; }
+        public DateTimeOffset? PasswordChangedAt { get; set; }
 
         // Account lockout
         public DateTimeOffset? LockedAt { get; set; }
