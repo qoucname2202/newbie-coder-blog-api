@@ -49,6 +49,8 @@ public static class DependencyInjection
 
         services.AddSingleton<IEmailService, StubEmailService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
+        // User management services
+        services.AddScoped<IUserService, UserService>();
         services.AddScoped<IUserProfileService, UserProfileService>();
         // User management services
         services.AddScoped<IUserService, UserService>();

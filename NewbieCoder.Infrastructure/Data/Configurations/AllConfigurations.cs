@@ -52,6 +52,8 @@ public class UserConfig : IEntityTypeConfiguration<User>
         b.Property(x => x.FullName).HasColumnName("full_name").HasMaxLength(150).IsRequired();
         b.Property(x => x.AvatarUrl).HasColumnName("avatar_url").HasMaxLength(1000);
         b.Property(x => x.Bio).HasColumnName("bio").HasMaxLength(500);
+        b.Property(x => x.DisplayTitle).HasColumnName("display_title").HasMaxLength(100);
+        b.Property(x => x.WebsiteUrl).HasColumnName("website_url").HasMaxLength(2048);
         b.Property(x => x.Status).HasColumnName("status")
             .HasConversion(EnumStringConverters.UserStatusConverter)
             .HasDefaultValue(UserStatus.Inactive);
