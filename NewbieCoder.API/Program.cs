@@ -51,6 +51,13 @@ if (seedEnabled)
 
 var app = builder.Build();
 
+// Fix database constraints at startup (idempotent)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await FixDatabaseConstraintsAsync(db);
+}
+
 // Auto-apply any pending schema changes on startup (idempotent — skips if column already exists).
 // Retry up to 3 times with exponential backoff in case Neon is temporarily unreachable.
 async Task<bool> TrySchemaMigrate(AppDbContext db, int maxRetries = 3)
@@ -105,6 +112,29 @@ Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "uploads
 app.UseApiPipeline();
 
 app.Run();
+
+// Ensure database constraints are correct
+static async Task FixDatabaseConstraintsAsync(AppDbContext db)
+{
+    try
+    {
+        // Fix ck_users_status constraint to include 'LOCKED'
+        await db.Database.ExecuteSqlRawAsync(@"
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'users') THEN
+                    ALTER TABLE users DROP CONSTRAINT IF EXISTS ck_users_status;
+                    ALTER TABLE users ADD CONSTRAINT ck_users_status
+                        CHECK (status IN ('ACT','INACT','BAN','CLS','LOCKED'));
+                END IF;
+            END $$;
+        ");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Warning: Could not fix database constraints: {ex.Message}");
+    }
+}
 
 // Expose for integration tests
 public partial class Program;

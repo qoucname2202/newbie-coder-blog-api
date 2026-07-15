@@ -30,6 +30,10 @@ namespace NewbieCoder.Core.Entities
         public DateTimeOffset? LastLoginAt { get; set; }
         public DateTimeOffset? PasswordChangedAt { get; set; }
 
+        // Account lockout
+        public DateTimeOffset? LockedAt { get; set; }
+        public string? LockedReason { get; set; }
+        public long? LockedBy { get; set; }
 
         // Navigation
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();

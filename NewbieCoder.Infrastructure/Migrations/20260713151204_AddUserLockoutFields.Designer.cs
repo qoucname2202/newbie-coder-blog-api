@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NewbieCoder.Infrastructure.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NewbieCoder.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260713151204_AddUserLockoutFields")]
+    partial class AddUserLockoutFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,22 +69,9 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("ip_address");
 
-                    b.Property<string>("NewValue")
-                        .HasColumnType("text")
-                        .HasColumnName("new_value");
-
-                    b.Property<string>("OldValue")
-                        .HasColumnType("text")
-                        .HasColumnName("old_value");
-
                     b.Property<long?>("SessionId")
                         .HasColumnType("bigint")
                         .HasColumnName("session_id");
-
-                    b.Property<string>("TraceId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("trace_id");
 
                     b.Property<string>("UserAgent")
                         .HasColumnType("text")
@@ -100,8 +90,6 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.HasIndex("DeviceId");
 
                     b.HasIndex("SessionId");
-
-                    b.HasIndex("TraceId");
 
                     b.HasIndex("UserId");
 
@@ -1342,11 +1330,6 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("deleted_by");
 
-                    b.Property<string>("DisplayTitle")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("display_title");
-
                     b.Property<DateTimeOffset>("EffDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -1423,6 +1406,10 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("locked_reason");
 
+                    b.Property<DateTimeOffset?>("LockedUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("locked_until");
+
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -1452,11 +1439,6 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("username");
 
-                    b.Property<string>("WebsiteUrl")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("website_url");
-
                     b.HasKey("Id");
 
                     b.HasIndex("DeletedAt")
@@ -1468,6 +1450,10 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .IsUnique();
 
                     b.HasIndex("LockedBy");
+
+                    b.HasIndex("LockedUntil")
+                        .HasDatabaseName("ix_users_locked_until_active")
+                        .HasFilter("locked_until IS NOT NULL");
 
                     b.HasIndex("Status");
 
@@ -1487,7 +1473,6 @@ namespace NewbieCoder.Infrastructure.Migrations
                             t.HasCheckConstraint("ck_users_reputation", "reputation_score IS NULL OR reputation_score <= 100");
 
                             t.HasCheckConstraint("ck_users_status", "status IN ('ACT','INACT','BAN','CLS','LOCKED')");
-                            t.HasCheckConstraint("ck_users_status", "status IN ('ACT','INACT','BAN','CLS')");
                         });
                 });
 

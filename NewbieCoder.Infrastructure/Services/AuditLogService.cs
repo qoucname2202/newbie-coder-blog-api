@@ -17,6 +17,9 @@ public sealed class AuditLogService(AppDbContext db) : IAuditLogService
         string? entityType = null,
         long? entityId = null,
         string? details = null,
+        string? oldValue = null,
+        string? newValue = null,
+        string? traceId = null,
         CancellationToken cancellationToken = default)
     {
         var entry = new AuditLog
@@ -31,6 +34,9 @@ public sealed class AuditLogService(AppDbContext db) : IAuditLogService
             EntityType = entityType,
             EntityId = entityId,
             Details = details,
+            OldValue = oldValue,
+            NewValue = newValue,
+            TraceId = traceId,
             CreatedAt = DateTimeOffset.UtcNow
         };
 

@@ -76,13 +76,19 @@ public class UserConfig : IEntityTypeConfiguration<User>
         b.Property(x => x.LastLoginAt).HasColumnName("last_login_at");
         b.Property(x => x.PasswordChangedAt).HasColumnName("password_changed_at");
 
+        // Lockout fields
+        b.Property(x => x.LockedAt).HasColumnName("locked_at");
+        b.Property(x => x.LockedReason).HasColumnName("locked_reason").HasMaxLength(500);
+        b.Property(x => x.LockedBy).HasColumnName("locked_by");
+
         b.HasIndex(x => x.Email).IsUnique();
         b.HasIndex(x => x.Username).IsUnique();
         b.HasIndex(x => x.Status);
+        b.HasIndex(x => x.LockedBy);
 
         b.ToTable(t =>
         {
-            t.HasCheckConstraint("ck_users_status", "status IN ('ACT','INACT','BAN','CLS')");
+            t.HasCheckConstraint("ck_users_status", "status IN ('ACT','INACT','BAN','CLS','LOCKED')");
             t.HasCheckConstraint("ck_users_reputation", "reputation_score IS NULL OR reputation_score <= 100");
             t.HasCheckConstraint("ck_users_password_len", "length(password) >= 60");
             t.HasCheckConstraint("ck_users_follower_cnt", "follower_count >= 0");
@@ -94,6 +100,12 @@ public class UserConfig : IEntityTypeConfiguration<User>
         b.HasOne<User>()
             .WithMany()
             .HasForeignKey(x => x.DeletedBy)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        // self-FK: locked_by -> users.id
+        b.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(x => x.LockedBy)
             .OnDelete(DeleteBehavior.NoAction);
     }
 }
@@ -805,9 +817,15 @@ public class AuditLogConfig : IEntityTypeConfiguration<AuditLog>
         b.Property(x => x.Details).HasColumnName("details");
         b.Property(x => x.CreatedAt).HasColumnName("created_at");
 
+        // Structured audit context — added 2026-07-13 for A04 spec
+        b.Property(x => x.OldValue).HasColumnName("old_value").HasColumnType("text");
+        b.Property(x => x.NewValue).HasColumnName("new_value").HasColumnType("text");
+        b.Property(x => x.TraceId).HasColumnName("trace_id").HasMaxLength(100);
+
         b.HasIndex(x => x.UserId);
         b.HasIndex(x => x.Action);
         b.HasIndex(x => x.CreatedAt);
+        b.HasIndex(x => x.TraceId);
 
         b.HasOne(x => x.User)
             .WithMany(u => u.AuditLogs)

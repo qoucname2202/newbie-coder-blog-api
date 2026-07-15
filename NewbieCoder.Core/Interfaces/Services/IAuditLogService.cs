@@ -13,5 +13,8 @@ public interface IAuditLogService
         string? entityType = null,
         long? entityId = null,
         string? details = null,
+        string? oldValue = null,
+        string? newValue = null,
+        string? traceId = null,
         CancellationToken cancellationToken = default);
 }

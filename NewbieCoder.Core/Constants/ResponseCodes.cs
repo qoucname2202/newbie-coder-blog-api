@@ -40,19 +40,32 @@ public static class ResponseCodes
     public const string DeviceBlocked = "00010405";
     public const string DefaultRoleNotFound = "00010406";
 
+    // User lockout
+    public const string UserAlreadyLocked    = "00020401";
+    public const string CannotLockSelf       = "00020402";
+    public const string CannotLockSuperAdmin = "00020403";
+    public const string InvalidLockUntil     = "00020404";
+    public const string UserLocked           = "00020405";
+    public const string CannotUnlockUser     = "00020406";
+    public const string UserNotLocked        = "00020407";
+    public const string LockReasonTooShort   = "00020408";
+    public const string LockReasonTooLong    = "00020409";
+    public const string CannotLockDeleted    = "00020410";
+    public const string CannotUnlockDeleted  = "00020411";
+
     // User management
-    public const string EmailAlreadyExistsUser = "00020401";
-    public const string UsernameAlreadyExistsUser = "00020402";
-    public const string RoleNotFound = "00020403";
-    public const string InvalidUserStatus = "00020404";
-    public const string InvalidLogoutReason = "00020501";
-    public const string SessionAlreadyRevoked = "00020502";
-    public const string InvalidRefreshToken = "00020503";
-    public const string EmailAlreadyExists = "00020504";
-    public const string UsernameAlreadyExists = "00020504";
-    public const string UserAlreadyExists = "00020505";
-    public const string CannotCreateAdminUser = "00020506";
-    public const string UserCreateFailed = "00020507";
+    public const string EmailAlreadyExistsUser = "00020501";
+    public const string UsernameAlreadyExistsUser = "00020502";
+    public const string RoleNotFound = "00020503";
+    public const string InvalidUserStatus = "00020504";
+    public const string InvalidLogoutReason = "00020505";
+    public const string SessionAlreadyRevoked = "00020506";
+    public const string InvalidRefreshToken = "00020507";
+    public const string EmailAlreadyExists = "00020508";
+    public const string UsernameAlreadyExists = "00020509";
+    public const string UserAlreadyExists = "00020510";
+    public const string CannotCreateAdminUser = "00020511";
+    public const string UserCreateFailed = "00020512";
 
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
@@ -75,6 +88,7 @@ public static class ResponseCodes
     /// </summary>
     public static int ToHttpStatus(string responseCode) => responseCode switch
     {
+        // General
         Success => HttpStatusCodes.Ok,
         ValidationError => HttpStatusCodes.BadRequest,
         NotFound => HttpStatusCodes.NotFound,
@@ -84,27 +98,48 @@ public static class ResponseCodes
         TooManyRequests => HttpStatusCodes.TooManyRequests,
         SessionRevoked => HttpStatusCodes.Unauthorized,
         InternalError => HttpStatusCodes.InternalServerError,
+
+        // Auth / registration
         EmailAlreadyExistsAuth => HttpStatusCodes.Conflict,
         UsernameAlreadyExistsAuth => HttpStatusCodes.Conflict,
-        InvalidLogoutReason => HttpStatusCodes.BadRequest,
-        SessionAlreadyRevoked => HttpStatusCodes.Ok,
-        InvalidRefreshToken => HttpStatusCodes.BadRequest,
-        EmailAlreadyExists => HttpStatusCodes.Conflict,
-        ResetPasswordWeak => HttpStatusCodes.BadRequest,
-        PasswordNotMatch => HttpStatusCodes.BadRequest,
-        PasswordReused => HttpStatusCodes.BadRequest,
-        UserUsernameAlreadyExists => HttpStatusCodes.Conflict,
         PasswordTooWeak => HttpStatusCodes.BadRequest,
         TermsNotAccepted => HttpStatusCodes.BadRequest,
         DeviceBlocked => HttpStatusCodes.Forbidden,
         DefaultRoleNotFound => HttpStatusCodes.InternalServerError,
+        InvalidLogoutReason => HttpStatusCodes.BadRequest,
+        SessionAlreadyRevoked => HttpStatusCodes.Ok,
+        InvalidRefreshToken => HttpStatusCodes.BadRequest,
+
+        // Password reset
+        ResetPasswordWeak => HttpStatusCodes.BadRequest,
+        PasswordNotMatch => HttpStatusCodes.BadRequest,
+        PasswordReused => HttpStatusCodes.BadRequest,
+
+        // User lockout
+        UserAlreadyLocked => HttpStatusCodes.Conflict,
+        CannotLockSelf => HttpStatusCodes.Forbidden,
+        CannotLockSuperAdmin => HttpStatusCodes.Forbidden,
+        InvalidLockUntil => HttpStatusCodes.BadRequest,
+        UserLocked => HttpStatusCodes.Forbidden,
+        CannotUnlockUser => HttpStatusCodes.Forbidden,
+        UserNotLocked => HttpStatusCodes.Conflict,
+        LockReasonTooShort => HttpStatusCodes.BadRequest,
+        LockReasonTooLong => HttpStatusCodes.BadRequest,
+        CannotLockDeleted => HttpStatusCodes.Conflict,
+        CannotUnlockDeleted => HttpStatusCodes.Conflict,
+
+        // User management (Create, Update, List)
         EmailAlreadyExistsUser => HttpStatusCodes.Conflict,
         UsernameAlreadyExistsUser => HttpStatusCodes.Conflict,
         RoleNotFound => HttpStatusCodes.NotFound,
         InvalidUserStatus => HttpStatusCodes.BadRequest,
         UserAlreadyExists => HttpStatusCodes.Conflict,
+        EmailAlreadyExists => HttpStatusCodes.Conflict,
+        UsernameAlreadyExists => HttpStatusCodes.Conflict,
+        UserUsernameAlreadyExists => HttpStatusCodes.Conflict,
         CannotCreateAdminUser => HttpStatusCodes.Forbidden,
         UserCreateFailed => HttpStatusCodes.InternalServerError,
+
         _ => HttpStatusCodes.InternalServerError
     };
 }

@@ -62,7 +62,11 @@ public static class ServiceCollectionExtensions
             });
 
         services.AddAuthorization(options => options.AddApiAuthorization());
-        services.AddControllers();
+        services.AddControllers().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+            options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        });
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {

@@ -23,7 +23,6 @@ public static class DependencyInjection
                 b =>
                 {
                     b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
-                    b.CommandTimeout(120);
                     b.CommandTimeout(30);
                     b.EnableRetryOnFailure(
                         maxRetryCount: 5,
@@ -37,6 +36,7 @@ public static class DependencyInjection
         services.AddSingleton<IAuthRateLimitService, AuthRateLimitService>();
         services.AddScoped<IPasswordHasherService, PasswordHasherService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService>(sp =>

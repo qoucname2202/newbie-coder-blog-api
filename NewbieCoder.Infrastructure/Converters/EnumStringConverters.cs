@@ -11,21 +11,23 @@ using NewbieCoder.Core.Enums;
 /// </summary>
 public static class EnumStringConverters
 {
-    // ── UserStatus  ('ACT','INACT','BAN','CLS') ─────────────────────────────────
+    // ── UserStatus  ('ACT','INACT','BAN','CLS','LOCKED') ─────────────────────────────────
     public static string ToDbString(NewbieCoder.Core.Enums.UserStatus v) => v switch
     {
         NewbieCoder.Core.Enums.UserStatus.Active   => "ACT",
         NewbieCoder.Core.Enums.UserStatus.Inactive => "INACT",
         NewbieCoder.Core.Enums.UserStatus.Banned  => "BAN",
-        NewbieCoder.Core.Enums.UserStatus.Closed   => "CLS",
+        NewbieCoder.Core.Enums.UserStatus.Closed  => "CLS",
+        NewbieCoder.Core.Enums.UserStatus.Locked  => "LOCKED",
         _ => throw new ArgumentOutOfRangeException(nameof(v), v, null)
     };
     public static NewbieCoder.Core.Enums.UserStatus FromDbStringUserStatus(string s) => s switch
     {
-        "ACT"   => NewbieCoder.Core.Enums.UserStatus.Active,
-        "INACT" => NewbieCoder.Core.Enums.UserStatus.Inactive,
-        "BAN"   => NewbieCoder.Core.Enums.UserStatus.Banned,
-        "CLS"   => NewbieCoder.Core.Enums.UserStatus.Closed,
+        "ACT"    => NewbieCoder.Core.Enums.UserStatus.Active,
+        "INACT"  => NewbieCoder.Core.Enums.UserStatus.Inactive,
+        "BAN"    => NewbieCoder.Core.Enums.UserStatus.Banned,
+        "CLS"    => NewbieCoder.Core.Enums.UserStatus.Closed,
+        "LOCKED" => NewbieCoder.Core.Enums.UserStatus.Locked,
         _ => throw new ArgumentException("Invalid UserStatus: " + s, nameof(s))
     };
     public static readonly ValueConverter<NewbieCoder.Core.Enums.UserStatus, string> UserStatusConverter =

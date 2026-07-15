@@ -62,7 +62,13 @@ public class ExceptionHandlingMiddleware(
         };
 
         if (statusCode >= HttpStatusCodes.InternalServerError)
-            logger.LogError(exception, "Unhandled exception. RequestTrace={RequestTrace}", requestTrace);
+        {
+            logger.LogError(exception,
+                "Unhandled exception. RequestTrace={RequestTrace}. InnerType={InnerType}. InnerMessage={InnerMessage}",
+                requestTrace,
+                exception.InnerException?.GetType().FullName,
+                exception.InnerException?.Message);
+        }
 
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = statusCode;
