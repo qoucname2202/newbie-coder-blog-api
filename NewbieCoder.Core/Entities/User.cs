@@ -1,4 +1,4 @@
-﻿using NewbieCoder.Core.Enums;
+using NewbieCoder.Core.Enums;
 namespace NewbieCoder.Core.Entities
 {
     public class User : BaseEntity
@@ -15,6 +15,8 @@ namespace NewbieCoder.Core.Entities
         public string? CoverUrl { get; set; }
         public string? GithubUrl { get; set; }
         public string? LinkedinUrl { get; set; }
+        public string? DisplayTitle { get; set; }
+        public string? WebsiteUrl { get; set; }
 
         public string Location { get; set; } = null!;
 

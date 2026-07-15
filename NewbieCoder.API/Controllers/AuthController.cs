@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using NewbieCoder.API.Extensions;
 using NewbieCoder.API.Middlewares;
 using NewbieCoder.Core.Constants;
@@ -13,7 +14,7 @@ using NewbieCoder.Infrastructure.Services;
 namespace NewbieCoder.API.Controllers;
 
 /// <summary>
-/// Handles authentication operations: login, logout, token refresh, and current user profile.
+/// Handles authentication operations: login, logout, and token refresh.
 /// </summary>
 [ApiController]
 [Route("api/v1/auth")]
@@ -76,11 +77,16 @@ public sealed class AuthController(
     /// <summary>
     /// Revokes the current session and all its refresh tokens on this device.
     /// </summary>
+    /// <param name="request">Optional refresh token and logout reason.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpPost("logout")]
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Logout(
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LogoutRequest? request,
+        CancellationToken cancellationToken)
     {
         var trace = HttpContext.GetRequestTrace();
         var userId = GetRequiredUserId();
@@ -89,9 +95,14 @@ public sealed class AuthController(
         await authService.LogoutAsync(
             userId,
             sessionId,
+            request?.RefreshToken,
+            request?.LogoutReason ?? LogoutReason.UserLogout,
             GetClientIp(),
             Request.Headers.UserAgent.FirstOrDefault(),
             cancellationToken);
+
+        Response.Headers.Append("Set-Cookie",
+            "refresh_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/");
 
         return Ok(ApiResponse<string>.Success(
             "OK",
@@ -106,20 +117,31 @@ public sealed class AuthController(
     /// <summary>
     /// Revokes ALL sessions and refresh tokens for the current user across all devices.
     /// </summary>
+    /// <param name="request">Optional keep_current_session flag and logout reason.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpPost("logout-all")]
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> LogoutAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> LogoutAll(
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LogoutAllRequest? request,
+        CancellationToken cancellationToken)
     {
         var trace = HttpContext.GetRequestTrace();
         var userId = GetRequiredUserId();
+        var sessionId = GetRequiredSessionId();
 
         await authService.LogoutAllAsync(
             userId,
+            sessionId,
+            request?.KeepCurrentSession ?? false,
+            request?.LogoutReason ?? LogoutReason.LogoutAll,
             GetClientIp(),
             Request.Headers.UserAgent.FirstOrDefault(),
             cancellationToken);
+
+        Response.Headers.Append("Set-Cookie",
+            "refresh_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/");
 
         return Ok(ApiResponse<string>.Success(
             "OK",

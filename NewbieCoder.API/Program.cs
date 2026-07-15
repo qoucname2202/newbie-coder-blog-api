@@ -7,6 +7,36 @@ using DotNetEnv;
 // Load .env BEFORE CreateBuilder so IConfiguration can pick up env vars.
 var envPath = Path.Combine(AppContext.BaseDirectory, ".env");
 DotNetEnv.Env.Load(envPath);
+// Try multiple locations: output dir, project dir, and current directory.
+var possibleEnvPaths = new[]
+{
+    Path.Combine(AppContext.BaseDirectory, ".env"),
+    Path.Combine(AppContext.BaseDirectory, "..", ".env"),
+    Path.Combine(AppContext.BaseDirectory, "..", "..", ".env"),
+    Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".env"),
+    Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".env"),
+    Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+    Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"),
+    Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env"),
+};
+
+string? loadedEnvPath = null;
+foreach (var envPath in possibleEnvPaths)
+{
+    var normalizedPath = Path.GetFullPath(envPath);
+    if (File.Exists(normalizedPath))
+    {
+        DotNetEnv.Env.Load(normalizedPath);
+        loadedEnvPath = normalizedPath;
+        Console.WriteLine($"Loaded .env from: {normalizedPath}");
+        break;
+    }
+}
+
+if (loadedEnvPath == null)
+{
+    Console.WriteLine("Warning: .env file not found in any of the expected locations.");
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,6 +98,9 @@ if (seedEnabled)
         Console.WriteLine($"[WARN] AuthDbSeeder failed: {ex.Message}");
     }
 }
+
+// Ensure uploads directory exists (used by UseStaticFiles).
+Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "uploads"));
 
 app.UseApiPipeline();
 
