@@ -18,6 +18,15 @@ public static class ResponseCodes
     public const string SessionRevoked = "00000401S";
     public const string InternalError = "00000500";
 
+    // Password reset
+    public const string InvalidEmailFormat = "00000201";
+    public const string ResetTokenRequired = "00000201";
+    public const string InvalidOrExpiredResetToken = "00000201";
+    public const string ResetPasswordWeak = "00000206";
+    public const string PasswordNotMatch = "00000207";
+    public const string PasswordReused = "00000208";
+    public const string TooManyResetRequests = "00000429";
+    public const string EmailSendFailed = "00000500";
 
     // Update profile
     public const string EmptyUpdateBody = "00000401";
@@ -40,6 +49,7 @@ public static class ResponseCodes
     public const string SessionAlreadyRevoked = "00020502";
     public const string InvalidRefreshToken = "00020503";
     public const string EmailAlreadyExists = "00020504";
+    public const string UsernameAlreadyExists = "00020504";
     public const string UserAlreadyExists = "00020505";
     public const string CannotCreateAdminUser = "00020506";
     public const string UserCreateFailed = "00020507";
@@ -80,6 +90,9 @@ public static class ResponseCodes
         SessionAlreadyRevoked => HttpStatusCodes.Ok,
         InvalidRefreshToken => HttpStatusCodes.BadRequest,
         EmailAlreadyExists => HttpStatusCodes.Conflict,
+        ResetPasswordWeak => HttpStatusCodes.BadRequest,
+        PasswordNotMatch => HttpStatusCodes.BadRequest,
+        PasswordReused => HttpStatusCodes.BadRequest,
         UserUsernameAlreadyExists => HttpStatusCodes.Conflict,
         PasswordTooWeak => HttpStatusCodes.BadRequest,
         TermsNotAccepted => HttpStatusCodes.BadRequest,
