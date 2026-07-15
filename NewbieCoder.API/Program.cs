@@ -21,9 +21,9 @@ var possibleEnvPaths = new[]
 };
 
 string? loadedEnvPath = null;
-foreach (var envPath in possibleEnvPaths)
+foreach (var candidatePath in possibleEnvPaths)
 {
-    var normalizedPath = Path.GetFullPath(envPath);
+    var normalizedPath = Path.GetFullPath(candidatePath);
     if (File.Exists(normalizedPath))
     {
         DotNetEnv.Env.Load(normalizedPath);

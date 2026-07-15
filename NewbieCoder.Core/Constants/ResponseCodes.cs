@@ -49,6 +49,7 @@ public static class ResponseCodes
     public const string SessionAlreadyRevoked = "00020502";
     public const string InvalidRefreshToken = "00020503";
     public const string EmailAlreadyExists = "00020504";
+    public const string UsernameAlreadyExists = "00020504";
     public const string UserAlreadyExists = "00020505";
     public const string CannotCreateAdminUser = "00020506";
     public const string UserCreateFailed = "00020507";
@@ -89,7 +90,6 @@ public static class ResponseCodes
         SessionAlreadyRevoked => HttpStatusCodes.Ok,
         InvalidRefreshToken => HttpStatusCodes.BadRequest,
         EmailAlreadyExists => HttpStatusCodes.Conflict,
-        UsernameAlreadyExists => HttpStatusCodes.Conflict,
         ResetPasswordWeak => HttpStatusCodes.BadRequest,
         PasswordNotMatch => HttpStatusCodes.BadRequest,
         PasswordReused => HttpStatusCodes.BadRequest,
