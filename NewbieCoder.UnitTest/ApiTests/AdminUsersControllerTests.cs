@@ -25,12 +25,17 @@ public class AdminUsersControllerTests
     private static AdminUsersController CreateController(
         Mock<IUserManagementService>? mockUserManagement = null,
         Mock<IUserService>? mockUserService = null,
+        Mock<IUserRoleService>? mockUserRoleService = null,
         long? userId = 99,
         IEnumerable<string>? roles = null)
     {
         mockUserManagement ??= new Mock<IUserManagementService>();
         mockUserService ??= new Mock<IUserService>();
-        var ctrl = new AdminUsersController(mockUserManagement.Object, mockUserService.Object);
+        mockUserRoleService ??= new Mock<IUserRoleService>();
+        var ctrl = new AdminUsersController(
+            mockUserManagement.Object,
+            mockUserService.Object,
+            mockUserRoleService.Object);
 
         var claims = new List<Claim>
         {

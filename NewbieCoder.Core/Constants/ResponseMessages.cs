@@ -50,6 +50,19 @@ public static class ResponseMessages
     public const string RoleIsAssignedToUsers     = "Role is currently assigned to one or more users and cannot be deleted.";
     public const string AdminRoleCannotBeDeactivated = "The admin role cannot be deactivated.";
     public const string RolesRetrieved           = "Roles retrieved successfully.";
+    public const string RoleAssignedSuccess      = "Role assigned successfully.";
+    public const string CannotAssignSuperAdmin  = "Cannot assign the SuperAdmin role.";
+    public const string CannotAssignHigherRole  = "Cannot assign a role higher than your own role.";
+    public const string CannotRemoveLastAdmin   = "Cannot remove the last Admin role.";
+    public const string CannotRemoveLastSuperAdmin = "Cannot remove the last SuperAdmin role.";
+    public const string CannotChangeOwnRole     = "Cannot change your own role.";
+    public const string CannotAssignDeletedRole = "Cannot assign a deleted role.";
+    public const string CannotAssignInactiveRole = "Cannot assign an inactive role.";
+    public const string CannotAssignDeletedUser = "Cannot assign a role to a deleted user.";
+    public const string CannotAssignInactiveUser = "Cannot assign a role to an inactive user.";
+    public const string CannotAssignOwnRole     = "Cannot assign a role to yourself.";
+    public const string CannotRevokeOwnRole   = "Cannot revoke your own role.";
+    public const string RoleRevokedSuccess       = "Role revoked successfully.";
     // Password reset
     public const string InvalidEmailFormat = "Invalid email format.";
     public const string ResetTokenRequired = "Reset token is required.";

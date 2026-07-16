@@ -21,4 +21,6 @@ public static class AuditActions
     public const string RoleDeleted = "ROLE_DELETED";
     public const string RoleActivated = "ROLE_ACTIVATED";
     public const string RoleDeactivated = "ROLE_DEACTIVATED";
+    public const string UserRoleAssigned = "USER_ROLE_ASSIGNED";
+    public const string UserRoleRevoked = "USER_ROLE_REVOKED";
 }
