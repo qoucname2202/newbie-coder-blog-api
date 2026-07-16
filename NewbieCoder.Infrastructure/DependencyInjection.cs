@@ -58,6 +58,10 @@ public static class DependencyInjection
   
         services.AddScoped<IFileUploadService, FileUploadService>();
 
+        // Role management services
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IRoleService, RoleService>();
+
         return services;
     }
 }

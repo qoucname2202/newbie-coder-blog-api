@@ -36,17 +36,31 @@ public static class ResponseMessages
     public const string CannotUnlockDeleted = "Cannot unlock a deleted account.";
     public const string LockSucceeded      = "User account locked successfully.";
     public const string UnlockSucceeded    = "User account unlocked successfully.";
+
+    // Role management
+    public const string RoleCreatedSuccess        = "Role created successfully.";
+    public const string RoleUpdatedSuccess        = "Role updated successfully.";
+    public const string RoleDeletedSuccess        = "Role deleted successfully.";
+    public const string RoleNameAlreadyExists     = "A role with this name already exists.";
+    public const string RoleCreateFailed          = "Failed to create role.";
+    public const string RoleUpdateFailed          = "Failed to update role.";
+    public const string RoleDeleteFailed          = "Failed to delete role.";
+    public const string SystemRoleCannotBeModified = "System roles cannot be modified.";
+    public const string SystemRoleCannotBeDeleted = "System roles cannot be deleted.";
+    public const string RoleIsAssignedToUsers     = "Role is currently assigned to one or more users and cannot be deleted.";
+    public const string AdminRoleCannotBeDeactivated = "The admin role cannot be deactivated.";
+    public const string RolesRetrieved           = "Roles retrieved successfully.";
     // Password reset
-    public const string InvalidEmailFormat = "Email không đúng định dạng.";
-    public const string ResetTokenRequired = "Reset token không được để trống.";
-    public const string InvalidOrExpiredResetToken = "Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.";
-    public const string PasswordTooWeak = "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.";
-    public const string PasswordNotMatch = "Mật khẩu xác nhận không khớp.";
-    public const string PasswordReused = "Mật khẩu mới không được giống mật khẩu hiện tại.";
-    public const string TooManyResetRequests = "Quá nhiều yêu cầu đặt lại mật khẩu. Vui lòng thử lại sau.";
-    public const string EmailSendFailed = "Không thể gửi email. Vui lòng thử lại sau.";
-    public const string ForgotPasswordSuccess = "Nếu email tồn tại trong hệ thống, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.";
-    public const string ResetPasswordSuccess = "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.";
+    public const string InvalidEmailFormat = "Invalid email format.";
+    public const string ResetTokenRequired = "Reset token is required.";
+    public const string InvalidOrExpiredResetToken = "Password reset token is invalid or has expired.";
+    public const string PasswordTooWeak = "Password must be at least 8 characters, including uppercase, lowercase, number and special character.";
+    public const string PasswordNotMatch = "Password confirmation does not match.";
+    public const string PasswordReused = "New password must not be the same as the current password.";
+    public const string TooManyResetRequests = "Too many password reset requests. Please try again later.";
+    public const string EmailSendFailed = "Unable to send email. Please try again later.";
+    public const string ForgotPasswordSuccess = "If the email exists in our system, we have sent password reset instructions.";
+    public const string ResetPasswordSuccess = "Password reset successfully. Please log in again.";
     // User management
     public const string UserUpdatedSuccess = "User account updated successfully.";
     public const string EmailAlreadyExists = "Email address is already in use.";
@@ -60,7 +74,7 @@ public static class ResponseMessages
     // Update profile
     public const string EmptyUpdateBody = "No update fields provided.";
     public const string InvalidUpdateField = "One or more fields are not allowed to be updated via this endpoint.";
-    public const string UpdateProfileSuccess = "Cập nhật thông tin cá nhân thành công";
-    public const string UpdateValidationFailed = "Dữ liệu cập nhật không hợp lệ";
-    public const string SessionInvalid = "Phiên đăng nhập không hợp lệ.";
+    public const string UpdateProfileSuccess = "Personal information updated successfully.";
+    public const string UpdateValidationFailed = "Invalid update data.";
+    public const string SessionInvalid = "Invalid session.";
 }
