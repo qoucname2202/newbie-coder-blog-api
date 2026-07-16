@@ -67,6 +67,16 @@ public static class ResponseCodes
     public const string CannotCreateAdminUser = "00020511";
     public const string UserCreateFailed = "00020512";
 
+    // Role management
+    public const string RoleNameAlreadyExists = "00020601";
+    public const string RoleCreateFailed = "00020602";
+    public const string RoleUpdateFailed = "00020603";
+    public const string RoleDeleteFailed = "00020604";
+    public const string SystemRoleCannotBeModified = "00020605";
+    public const string SystemRoleCannotBeDeleted = "00020606";
+    public const string RoleIsAssignedToUsers = "00020607";
+    public const string AdminRoleCannotBeDeactivated = "00020608";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>
@@ -139,6 +149,16 @@ public static class ResponseCodes
         UserUsernameAlreadyExists => HttpStatusCodes.Conflict,
         CannotCreateAdminUser => HttpStatusCodes.Forbidden,
         UserCreateFailed => HttpStatusCodes.InternalServerError,
+
+        // Role management (Create, Update, List)
+        RoleNameAlreadyExists => HttpStatusCodes.Conflict,
+        RoleCreateFailed => HttpStatusCodes.InternalServerError,
+        RoleUpdateFailed => HttpStatusCodes.InternalServerError,
+        RoleDeleteFailed => HttpStatusCodes.InternalServerError,
+        SystemRoleCannotBeModified => HttpStatusCodes.Forbidden,
+        SystemRoleCannotBeDeleted => HttpStatusCodes.Forbidden,
+        RoleIsAssignedToUsers => HttpStatusCodes.Conflict,
+        AdminRoleCannotBeDeactivated => HttpStatusCodes.Forbidden,
 
         _ => HttpStatusCodes.InternalServerError
     };
