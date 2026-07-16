@@ -77,6 +77,21 @@ public static class ResponseCodes
     public const string RoleIsAssignedToUsers = "00020607";
     public const string AdminRoleCannotBeDeactivated = "00020608";
 
+    // Role assignment
+    public const string CannotAssignSuperAdmin = "00020609";
+    public const string CannotAssignHigherRole = "00020610";
+    public const string CannotRemoveLastAdmin = "00020611";
+    public const string CannotRemoveLastSuperAdmin = "00020612";
+    public const string CannotChangeOwnRole = "00020613";
+    public const string CannotAssignDeletedRole = "00020614";
+    public const string CannotAssignInactiveRole = "00020615";
+    public const string CannotAssignDeletedUser = "00020616";
+    public const string CannotAssignInactiveUser = "00020617";
+    public const string CannotAssignOwnRole = "00020618";
+    public const string CannotRevokeOwnRole = "00020619";
+    public const string RoleAssignSuccess = "00020600";
+    public const string RoleRevokeSuccess = "00020622";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>
@@ -159,6 +174,21 @@ public static class ResponseCodes
         SystemRoleCannotBeDeleted => HttpStatusCodes.Forbidden,
         RoleIsAssignedToUsers => HttpStatusCodes.Conflict,
         AdminRoleCannotBeDeactivated => HttpStatusCodes.Forbidden,
+
+        // Role assignment
+        CannotAssignSuperAdmin => HttpStatusCodes.Forbidden,
+        CannotAssignHigherRole => HttpStatusCodes.Forbidden,
+        CannotRemoveLastAdmin => HttpStatusCodes.Conflict,
+        CannotRemoveLastSuperAdmin => HttpStatusCodes.Conflict,
+        CannotChangeOwnRole => HttpStatusCodes.Forbidden,
+        CannotAssignDeletedRole => HttpStatusCodes.NotFound,
+        CannotAssignInactiveRole => HttpStatusCodes.BadRequest,
+        CannotAssignDeletedUser => HttpStatusCodes.NotFound,
+        CannotAssignInactiveUser => HttpStatusCodes.BadRequest,
+        CannotAssignOwnRole => HttpStatusCodes.Forbidden,
+        CannotRevokeOwnRole => HttpStatusCodes.Forbidden,
+        RoleAssignSuccess => HttpStatusCodes.Ok,
+        RoleRevokeSuccess => HttpStatusCodes.Ok,
 
         _ => HttpStatusCodes.InternalServerError
     };
