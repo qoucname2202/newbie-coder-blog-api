@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
+using NewbieCoder.Core.CQRS.Posts;
 using NewbieCoder.Core.Constants;
 using NewbieCoder.Core.DTOs.Request.Admin;
 using NewbieCoder.Core.DTOs.Response.Admin;
@@ -9,6 +10,7 @@ using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.Interfaces.Repositories;
 using NewbieCoder.Core.Interfaces.Services;
 using NewbieCoder.Core.ViewModels;
+using NewbieCoder.Infrastructure.CQRS.Posts;
 using NewbieCoder.Infrastructure.Data;
 
 namespace NewbieCoder.Infrastructure.Services;
@@ -18,15 +20,18 @@ public sealed class AdminPostService : IAdminPostService
     private readonly AppDbContext _db;
     private readonly IPostRepository _postRepo;
     private readonly IAuditLogService _auditLog;
+    private readonly ChangePostStatusCommandHandler _changeStatusHandler;
 
     public AdminPostService(
         AppDbContext db,
         IPostRepository postRepo,
-        IAuditLogService auditLog)
+        IAuditLogService auditLog,
+        ChangePostStatusCommandHandler changeStatusHandler)
     {
         _db = db;
         _postRepo = postRepo;
         _auditLog = auditLog;
+        _changeStatusHandler = changeStatusHandler;
     }
 
     #region GetPostsAsync
@@ -437,6 +442,32 @@ public sealed class AdminPostService : IAdminPostService
             IsDeleted = post.DeletedAt != null,
             UpdatedAt = post.DateLastMaint
         };
+    }
+
+    #endregion
+
+    #region ChangePostStatusAsync
+
+    public async Task<ChangePostStatusResponse> ChangePostStatusAsync(
+        long postId,
+        ChangePostStatusRequest request,
+        long changedByUserId,
+        string? ipAddress,
+        string? userAgent,
+        string? traceId,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new ChangePostStatusCommand
+        {
+            PostId = postId,
+            Request = request,
+            ChangedByUserId = changedByUserId,
+            IpAddress = ipAddress,
+            UserAgent = userAgent,
+            TraceId = traceId
+        };
+
+        return await _changeStatusHandler.HandleAsync(command, cancellationToken);
     }
 
     #endregion

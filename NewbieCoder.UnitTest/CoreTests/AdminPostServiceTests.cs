@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using NewbieCoder.Core.CQRS.Posts;
 using NewbieCoder.Core.Constants;
 using NewbieCoder.Core.DTOs.Request.Admin;
 using NewbieCoder.Core.Entities;
@@ -7,6 +8,7 @@ using NewbieCoder.Core.Enums;
 using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.Interfaces.Repositories;
 using NewbieCoder.Core.Interfaces.Services;
+using NewbieCoder.Infrastructure.CQRS.Posts;
 using NewbieCoder.Infrastructure.Data;
 using NewbieCoder.Infrastructure.Repositories;
 using NewbieCoder.Infrastructure.Services;
@@ -30,7 +32,8 @@ public class AdminPostServiceTests : IDisposable
         _db = new AppDbContext(options);
         _postRepo = new PostRepository(_db);
         _auditLog = new TestAuditLogService();
-        _sut = new AdminPostService(_db, _postRepo, _auditLog);
+        var changeStatusHandler = new ChangePostStatusCommandHandler(_db, _postRepo, _auditLog);
+        _sut = new AdminPostService(_db, _postRepo, _auditLog, changeStatusHandler);
     }
 
     public void Dispose() => _db.Dispose();
@@ -998,6 +1001,270 @@ public class AdminPostServiceTests : IDisposable
 
         Assert.NotEqual("existing-post", result.Slug);
         Assert.StartsWith("existing-post-", result.Slug);
+    }
+
+    #endregion
+
+    #region ChangePostStatusAsync — Success
+
+    [Fact]
+    public async Task ChangePostStatusAsync_HidePublishedPost_ChangesStatusToHidden()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var author = await SeedAuthorUserAsync(1);
+        await SeedPostAsync(1, authorId: 1, status: PostStatus.Published);
+
+        var request = new ChangePostStatusRequest { Status = "Hidden" };
+
+        var result = await _sut.ChangePostStatusAsync(
+            postId: 1,
+            request,
+            changedByUserId: 99,
+            ipAddress: "127.0.0.1",
+            userAgent: "Test",
+            traceId: "trace-s1",
+            CancellationToken.None);
+
+        Assert.Equal("Published", result.PreviousStatus);
+        Assert.Equal("Hidden", result.CurrentStatus);
+        Assert.Equal(99, result.UpdatedBy);
+
+        var post = await _db.Posts.AsNoTracking().FirstAsync(p => p.Id == 1);
+        Assert.Equal(PostStatus.Hidden, post.Status);
+    }
+
+    [Fact]
+    public async Task ChangePostStatusAsync_ShowHiddenPost_ChangesStatusToPublished()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var author = await SeedAuthorUserAsync(1);
+        await SeedPostAsync(1, authorId: 1, status: PostStatus.Hidden);
+
+        var request = new ChangePostStatusRequest { Status = "Published" };
+
+        var result = await _sut.ChangePostStatusAsync(
+            postId: 1,
+            request,
+            changedByUserId: 99,
+            ipAddress: null,
+            userAgent: null,
+            traceId: null,
+            CancellationToken.None);
+
+        Assert.Equal("Hidden", result.PreviousStatus);
+        Assert.Equal("Published", result.CurrentStatus);
+    }
+
+    [Fact]
+    public async Task ChangePostStatusAsync_PublishDraft_ChangesStatusToPublished()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var author = await SeedAuthorUserAsync(1);
+        await SeedPostAsync(1, authorId: 1, status: PostStatus.Draft);
+
+        var request = new ChangePostStatusRequest { Status = "Published" };
+
+        var result = await _sut.ChangePostStatusAsync(
+            postId: 1,
+            request,
+            changedByUserId: 99,
+            ipAddress: null,
+            userAgent: null,
+            traceId: null,
+            CancellationToken.None);
+
+        Assert.Equal("Draft", result.PreviousStatus);
+        Assert.Equal("Published", result.CurrentStatus);
+    }
+
+    [Fact]
+    public async Task ChangePostStatusAsync_PublishedToArchived_ChangesStatusToArchived()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var author = await SeedAuthorUserAsync(1);
+        await SeedPostAsync(1, authorId: 1, status: PostStatus.Published);
+
+        var request = new ChangePostStatusRequest { Status = "Archived" };
+
+        var result = await _sut.ChangePostStatusAsync(
+            postId: 1,
+            request,
+            changedByUserId: 99,
+            ipAddress: null,
+            userAgent: null,
+            traceId: null,
+            CancellationToken.None);
+
+        Assert.Equal("Published", result.PreviousStatus);
+        Assert.Equal("Archived", result.CurrentStatus);
+    }
+
+    [Fact]
+    public async Task ChangePostStatusAsync_WritesAuditLog()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var author = await SeedAuthorUserAsync(1);
+        await SeedPostAsync(1, authorId: 1, status: PostStatus.Published);
+
+        var request = new ChangePostStatusRequest { Status = "Hidden" };
+
+        await _sut.ChangePostStatusAsync(
+            postId: 1,
+            request,
+            changedByUserId: 99,
+            ipAddress: "10.0.0.1",
+            userAgent: "Browser",
+            traceId: "trace-audit",
+            CancellationToken.None);
+
+        Assert.True(_auditLog.LogCalled);
+        Assert.Equal(AuditActions.PostVisibilityChanged, _auditLog.LoggedAction);
+        Assert.Equal(nameof(Post), _auditLog.LoggedEntityType);
+        Assert.Contains("Published", _auditLog.LoggedDetails ?? "");
+        Assert.Contains("Hidden", _auditLog.LoggedDetails ?? "");
+    }
+
+    [Fact]
+    public async Task ChangePostStatusAsync_ClearPublishedAt_WhenHidden()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var author = await SeedAuthorUserAsync(1);
+        var post = await SeedPostAsync(1, authorId: 1, status: PostStatus.Published);
+        post.PublishedAt = DateTimeOffset.UtcNow;
+        await _db.SaveChangesAsync();
+
+        var request = new ChangePostStatusRequest { Status = "Hidden" };
+
+        await _sut.ChangePostStatusAsync(
+            postId: 1,
+            request,
+            changedByUserId: 99,
+            ipAddress: null,
+            userAgent: null,
+            traceId: null,
+            CancellationToken.None);
+
+        var dbPost = await _db.Posts.AsNoTracking().FirstAsync(p => p.Id == 1);
+        Assert.Null(dbPost.PublishedAt);
+    }
+
+    [Fact]
+    public async Task ChangePostStatusAsync_SetPublishedAt_WhenPublished()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var author = await SeedAuthorUserAsync(1);
+        await SeedPostAsync(1, authorId: 1, status: PostStatus.Draft);
+
+        var request = new ChangePostStatusRequest { Status = "Published" };
+
+        await _sut.ChangePostStatusAsync(
+            postId: 1,
+            request,
+            changedByUserId: 99,
+            ipAddress: null,
+            userAgent: null,
+            traceId: null,
+            CancellationToken.None);
+
+        var dbPost = await _db.Posts.AsNoTracking().FirstAsync(p => p.Id == 1);
+        Assert.NotNull(dbPost.PublishedAt);
+    }
+
+    #endregion
+
+    #region ChangePostStatusAsync — Validation Failures
+
+    [Fact]
+    public async Task ChangePostStatusAsync_NonExistentPost_ThrowsBusinessException404()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var request = new ChangePostStatusRequest { Status = "Hidden" };
+
+        var ex = await Assert.ThrowsAsync<BusinessException>(
+            () => _sut.ChangePostStatusAsync(9999, request, 99, null, null, null, CancellationToken.None));
+
+        Assert.Equal(HttpStatusCodes.NotFound, ex.StatusCode);
+        Assert.Equal(ResponseCodes.PostNotFound, ex.ResponseCode);
+    }
+
+    [Fact]
+    public async Task ChangePostStatusAsync_DeletedPost_ThrowsBusinessException404()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var author = await SeedAuthorUserAsync(1);
+        await SeedPostAsync(1, authorId: 1, isDeleted: true);
+
+        var request = new ChangePostStatusRequest { Status = "Hidden" };
+
+        var ex = await Assert.ThrowsAsync<BusinessException>(
+            () => _sut.ChangePostStatusAsync(1, request, 99, null, null, null, CancellationToken.None));
+
+        Assert.Equal(HttpStatusCodes.NotFound, ex.StatusCode);
+        Assert.Equal(ResponseCodes.PostNotFound, ex.ResponseCode);
+    }
+
+    [Fact]
+    public async Task ChangePostStatusAsync_InvalidStatus_ThrowsBusinessException400()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var author = await SeedAuthorUserAsync(1);
+        await SeedPostAsync(1, authorId: 1, status: PostStatus.Published);
+
+        var request = new ChangePostStatusRequest { Status = "NotARealStatus" };
+
+        var ex = await Assert.ThrowsAsync<BusinessException>(
+            () => _sut.ChangePostStatusAsync(1, request, 99, null, null, null, CancellationToken.None));
+
+        Assert.Equal(HttpStatusCodes.BadRequest, ex.StatusCode);
+        Assert.Equal(ResponseCodes.InvalidPostStatus, ex.ResponseCode);
+    }
+
+    [Fact]
+    public async Task ChangePostStatusAsync_AlreadyInTargetStatus_ThrowsBusinessException409()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var author = await SeedAuthorUserAsync(1);
+        await SeedPostAsync(1, authorId: 1, status: PostStatus.Published);
+
+        var request = new ChangePostStatusRequest { Status = "Published" };
+
+        var ex = await Assert.ThrowsAsync<BusinessException>(
+            () => _sut.ChangePostStatusAsync(1, request, 99, null, null, null, CancellationToken.None));
+
+        Assert.Equal(HttpStatusCodes.Conflict, ex.StatusCode);
+        Assert.Equal(ResponseCodes.PostAlreadyInTargetStatus, ex.ResponseCode);
+    }
+
+    [Fact]
+    public async Task ChangePostStatusAsync_InvalidTransition_DraftToHidden_ThrowsBusinessException409()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var author = await SeedAuthorUserAsync(1);
+        await SeedPostAsync(1, authorId: 1, status: PostStatus.Draft);
+
+        var request = new ChangePostStatusRequest { Status = "Hidden" };
+
+        var ex = await Assert.ThrowsAsync<BusinessException>(
+            () => _sut.ChangePostStatusAsync(1, request, 99, null, null, null, CancellationToken.None));
+
+        Assert.Equal(HttpStatusCodes.Conflict, ex.StatusCode);
+        Assert.Equal(ResponseCodes.InvalidPostStatusTransition, ex.ResponseCode);
+    }
+
+    [Fact]
+    public async Task ChangePostStatusAsync_InvalidTransition_HiddenToArchived_ThrowsBusinessException409()
+    {
+        var admin = await SeedAdminUserAsync(99);
+        var author = await SeedAuthorUserAsync(1);
+        await SeedPostAsync(1, authorId: 1, status: PostStatus.Hidden);
+
+        var request = new ChangePostStatusRequest { Status = "Archived" };
+
+        var ex = await Assert.ThrowsAsync<BusinessException>(
+            () => _sut.ChangePostStatusAsync(1, request, 99, null, null, null, CancellationToken.None));
+
+        Assert.Equal(HttpStatusCodes.Conflict, ex.StatusCode);
+        Assert.Equal(ResponseCodes.InvalidPostStatusTransition, ex.ResponseCode);
     }
 
     #endregion

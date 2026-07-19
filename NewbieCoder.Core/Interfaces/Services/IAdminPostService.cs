@@ -1,3 +1,4 @@
+using NewbieCoder.Core.CQRS.Posts;
 using NewbieCoder.Core.DTOs.Request.Admin;
 using NewbieCoder.Core.DTOs.Response.Admin;
 using NewbieCoder.Core.ViewModels;
@@ -63,6 +64,19 @@ public interface IAdminPostService
     Task<RestoreAdminPostResponse> RestorePostAsync(
         long postId,
         long restoredByUserId,
+        string? ipAddress,
+        string? userAgent,
+        string? traceId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Changes a post's visibility status. Supports only the Published &lt;-&gt; Hidden toggle,
+    /// Draft -&gt; Published, and Published -&gt; Archived transitions.
+    /// </summary>
+    Task<ChangePostStatusResponse> ChangePostStatusAsync(
+        long postId,
+        ChangePostStatusRequest request,
+        long changedByUserId,
         string? ipAddress,
         string? userAgent,
         string? traceId,

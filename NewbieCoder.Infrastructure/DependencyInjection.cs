@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NewbieCoder.Core.Interfaces.Repositories;
 using NewbieCoder.Core.Interfaces.Services;
+using NewbieCoder.Infrastructure.CQRS.Posts;
 using NewbieCoder.Infrastructure.Data;
 using NewbieCoder.Infrastructure.Repositories;
 using NewbieCoder.Infrastructure.Services;
@@ -66,6 +67,7 @@ public static class DependencyInjection
         // Post management services
         services.AddScoped<IPostRepository, PostRepository>();
         services.AddScoped<IAdminPostService, AdminPostService>();
+        services.AddScoped<ChangePostStatusCommandHandler>();
 
         return services;
     }

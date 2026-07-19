@@ -116,6 +116,8 @@ public static class ResponseCodes
     public const string PostRestoreFailed = "00020721";
     public const string PostConcurrencyConflict = "00020722";
     public const string InvalidPostVisibility = "00020723";
+    public const string PostAlreadyInTargetStatus = "00020724";
+    public const string PostStatusUpdateFailed = "00020725";
 
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
@@ -239,6 +241,8 @@ public static class ResponseCodes
         PostRestoreFailed => HttpStatusCodes.InternalServerError,
         PostConcurrencyConflict => HttpStatusCodes.Conflict,
         InvalidPostVisibility => HttpStatusCodes.BadRequest,
+        PostAlreadyInTargetStatus => HttpStatusCodes.Conflict,
+        PostStatusUpdateFailed => HttpStatusCodes.InternalServerError,
 
         _ => HttpStatusCodes.InternalServerError
     };
