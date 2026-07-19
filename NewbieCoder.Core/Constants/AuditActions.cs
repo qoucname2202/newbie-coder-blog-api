@@ -23,4 +23,13 @@ public static class AuditActions
     public const string RoleDeactivated = "ROLE_DEACTIVATED";
     public const string UserRoleAssigned = "USER_ROLE_ASSIGNED";
     public const string UserRoleRevoked = "USER_ROLE_REVOKED";
+
+    // Post management
+    public const string PostCreatedByAdmin = "POST_CREATED_BY_ADMIN";
+    public const string SystemPostCreated = "SYSTEM_POST_CREATED";
+    public const string PostCreatedForAuthor = "POST_CREATED_FOR_AUTHOR";
+    public const string PostUpdatedByAdmin = "POST_UPDATED_BY_ADMIN";
+    public const string PostDeletedByAdmin = "POST_DELETED_BY_ADMIN";
+    public const string PostRestoredByAdmin = "POST_RESTORED_BY_ADMIN";
+    public const string PostPublishedByAdmin = "POST_PUBLISHED_BY_ADMIN";
 }
