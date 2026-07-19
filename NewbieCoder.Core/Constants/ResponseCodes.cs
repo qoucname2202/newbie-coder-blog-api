@@ -119,6 +119,27 @@ public static class ResponseCodes
     public const string PostAlreadyInTargetStatus = "00020724";
     public const string PostStatusUpdateFailed = "00020725";
 
+    // Interview question management
+    public const string InterviewQuestionNotFound = "00020730";
+    public const string InterviewQuestionAlreadyDeleted = "00020731";
+    public const string InterviewQuestionNotDeleted = "00020732";
+    public const string InterviewQuestionTitleRequired = "00020733";
+    public const string InterviewQuestionContentRequired = "00020734";
+    public const string InterviewQuestionAnswerRequired = "00020735";
+    public const string InterviewQuestionInvalidDifficulty = "00020736";
+    public const string InterviewQuestionInvalidStatus = "00020737";
+    public const string InterviewQuestionInvalidStatusTransition = "00020738";
+    public const string InterviewQuestionAlreadyInTargetStatus = "00020739";
+    public const string InterviewQuestionCategoryNotFound = "00020740";
+    public const string InterviewQuestionTagNotFound = "00020741";
+    public const string InterviewQuestionInvalidAnswers = "00020742";
+    public const string InterviewQuestionMultiplePreferredAnswers = "00020743";
+    public const string InterviewQuestionCreateFailed = "00020750";
+    public const string InterviewQuestionUpdateFailed = "00020751";
+    public const string InterviewQuestionDeleteFailed = "00020752";
+    public const string InterviewQuestionRestoreFailed = "00020753";
+    public const string InterviewQuestionStatusUpdateFailed = "00020754";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>
@@ -243,6 +264,27 @@ public static class ResponseCodes
         InvalidPostVisibility => HttpStatusCodes.BadRequest,
         PostAlreadyInTargetStatus => HttpStatusCodes.Conflict,
         PostStatusUpdateFailed => HttpStatusCodes.InternalServerError,
+
+        // Interview question management
+        InterviewQuestionNotFound => HttpStatusCodes.NotFound,
+        InterviewQuestionAlreadyDeleted => HttpStatusCodes.Conflict,
+        InterviewQuestionNotDeleted => HttpStatusCodes.Conflict,
+        InterviewQuestionTitleRequired => HttpStatusCodes.BadRequest,
+        InterviewQuestionContentRequired => HttpStatusCodes.BadRequest,
+        InterviewQuestionAnswerRequired => HttpStatusCodes.BadRequest,
+        InterviewQuestionInvalidDifficulty => HttpStatusCodes.BadRequest,
+        InterviewQuestionInvalidStatus => HttpStatusCodes.BadRequest,
+        InterviewQuestionInvalidStatusTransition => HttpStatusCodes.Conflict,
+        InterviewQuestionAlreadyInTargetStatus => HttpStatusCodes.Conflict,
+        InterviewQuestionCategoryNotFound => HttpStatusCodes.NotFound,
+        InterviewQuestionTagNotFound => HttpStatusCodes.NotFound,
+        InterviewQuestionInvalidAnswers => HttpStatusCodes.BadRequest,
+        InterviewQuestionMultiplePreferredAnswers => HttpStatusCodes.BadRequest,
+        InterviewQuestionCreateFailed => HttpStatusCodes.InternalServerError,
+        InterviewQuestionUpdateFailed => HttpStatusCodes.InternalServerError,
+        InterviewQuestionDeleteFailed => HttpStatusCodes.InternalServerError,
+        InterviewQuestionRestoreFailed => HttpStatusCodes.InternalServerError,
+        InterviewQuestionStatusUpdateFailed => HttpStatusCodes.InternalServerError,
 
         _ => HttpStatusCodes.InternalServerError
     };

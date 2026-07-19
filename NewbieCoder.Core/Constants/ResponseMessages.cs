@@ -115,6 +115,33 @@ public static class ResponseMessages
     public const string PostAlreadyInTargetStatus = "Post is already in the target status.";
     public const string PostStatusUpdateFailed = "Failed to update post status.";
 
+    // Interview question management
+    public const string InterviewQuestionCreatedSuccess = "Interview question created successfully.";
+    public const string InterviewQuestionUpdatedSuccess = "Interview question updated successfully.";
+    public const string InterviewQuestionDeletedSuccess = "Interview question deleted successfully.";
+    public const string InterviewQuestionRestoredSuccess = "Interview question restored successfully.";
+    public const string InterviewQuestionRetrievedSuccess = "Interview question retrieved successfully.";
+    public const string InterviewQuestionNotFound = "Interview question not found.";
+    public const string InterviewQuestionAlreadyDeleted = "Interview question is already deleted.";
+    public const string InterviewQuestionNotDeleted = "Interview question is not deleted.";
+    public const string InterviewQuestionTitleRequired = "Interview question title is required.";
+    public const string InterviewQuestionContentRequired = "Interview question content is required.";
+    public const string InterviewQuestionAnswerRequired = "At least one answer is required when the question status is Active.";
+    public const string InterviewQuestionInvalidDifficulty = "Invalid difficulty level.";
+    public const string InterviewQuestionInvalidStatus = "Invalid interview question status.";
+    public const string InterviewQuestionInvalidStatusTransition = "The interview question status transition is invalid.";
+    public const string InterviewQuestionAlreadyInTargetStatus = "Interview question is already in the target status.";
+    public const string InterviewQuestionCategoryNotFound = "The specified category does not exist.";
+    public const string InterviewQuestionTagNotFound = "One or more specified tags do not exist.";
+    public const string InterviewQuestionInvalidAnswers = "One or more answers are invalid.";
+    public const string InterviewQuestionMultiplePreferredAnswers = "Only one answer can be marked as preferred.";
+    public const string InterviewQuestionCreateFailed = "Failed to create interview question.";
+    public const string InterviewQuestionUpdateFailed = "Failed to update interview question.";
+    public const string InterviewQuestionDeleteFailed = "Failed to delete interview question.";
+    public const string InterviewQuestionRestoreFailed = "Failed to restore interview question.";
+    public const string InterviewQuestionStatusUpdateFailed = "Failed to update interview question status.";
+    public const string InterviewQuestionsRetrievedSuccess = "Interview questions retrieved successfully.";
+
     // Update profile
     public const string EmptyUpdateBody = "No update fields provided.";
     public const string InvalidUpdateField = "One or more fields are not allowed to be updated via this endpoint.";

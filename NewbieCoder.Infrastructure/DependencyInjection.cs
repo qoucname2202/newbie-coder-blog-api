@@ -69,6 +69,10 @@ public static class DependencyInjection
         services.AddScoped<IAdminPostService, AdminPostService>();
         services.AddScoped<ChangePostStatusCommandHandler>();
 
+        // Interview question management services
+        services.AddScoped<IInterviewQuestionRepository, InterviewQuestionRepository>();
+        services.AddScoped<IInterviewQuestionService, InterviewQuestionService>();
+
         return services;
     }
 }
