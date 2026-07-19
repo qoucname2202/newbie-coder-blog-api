@@ -7,7 +7,9 @@ namespace NewbieCoder.Core.Entities
         public string Title { get; set; } = null!;
         public string Slug { get; set; } = null!;
         public string QuestionContent { get; set; } = null!;
+        public string? Explanation { get; set; }
         public InterviewLevel Level { get; set; }
+        public string? Technology { get; set; }
         public string? Topic { get; set; }
         public PostStatus Status { get; set; } = PostStatus.Draft;
         public int ViewCount { get; set; }

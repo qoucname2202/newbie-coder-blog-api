@@ -597,8 +597,11 @@ public class InterviewQuestionConfig : IEntityTypeConfiguration<InterviewQuestio
         b.Property(x => x.Slug).HasColumnName("slug").HasMaxLength(500).IsRequired();
         b.Property(x => x.QuestionContent).HasColumnName("question_content").HasColumnType("text").IsRequired();
 
+        b.Property(x => x.Explanation).HasColumnName("explanation").HasColumnType("text");
+
         b.Property(x => x.Level).HasColumnName("level").HasConversion(EnumStringConverters.InterviewLevelConverter).IsRequired();
 
+        b.Property(x => x.Technology).HasColumnName("technology").HasMaxLength(100);
         b.Property(x => x.Topic).HasColumnName("topic").HasMaxLength(100);
         b.Property(x => x.Status).HasColumnName("status").HasConversion(EnumStringConverters.PostStatusConverter).HasDefaultValue(PostStatus.Draft);
         b.Property(x => x.ViewCount).HasColumnName("view_count").HasDefaultValue(0);
@@ -610,6 +613,11 @@ public class InterviewQuestionConfig : IEntityTypeConfiguration<InterviewQuestio
         b.HasIndex(x => x.AuthorId);
         b.HasIndex(x => x.Level);
         b.HasIndex(x => x.Status);
+        b.HasIndex(x => x.Technology);
+        b.HasIndex(x => x.Topic);
+
+        // Composite index for filtered queries
+        b.HasIndex(x => new { x.Status, x.DeletedAt }).HasFilter("deleted_at IS NULL");
 
         // CHECK constraint missing from the original — added here
         b.ToTable(t =>
@@ -666,6 +674,7 @@ public class InterviewQuestionTagConfig : IEntityTypeConfiguration<InterviewQues
             .HasDefaultValueSql("date_trunc('day', now())")
             .ValueGeneratedOnAdd();
         b.HasIndex(x => x.TagId);
+        b.HasIndex(x => new { x.QuestionId, x.TagId }).IsUnique();
 
         b.HasOne(x => x.Question)
             .WithMany(q => q.InterviewQuestionTags)

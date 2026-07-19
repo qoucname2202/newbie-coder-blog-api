@@ -33,4 +33,11 @@ public static class AuditActions
     public const string PostRestoredByAdmin = "POST_RESTORED_BY_ADMIN";
     public const string PostPublishedByAdmin = "POST_PUBLISHED_BY_ADMIN";
     public const string PostVisibilityChanged = "POST_VISIBILITY_CHANGED";
+
+    // Interview question management
+    public const string InterviewQuestionCreated = "INTERVIEW_QUESTION_CREATED";
+    public const string InterviewQuestionUpdated = "INTERVIEW_QUESTION_UPDATED";
+    public const string InterviewQuestionDeleted = "INTERVIEW_QUESTION_DELETED";
+    public const string InterviewQuestionRestored = "INTERVIEW_QUESTION_RESTORED";
+    public const string InterviewQuestionStatusChanged = "INTERVIEW_QUESTION_STATUS_CHANGED";
 }
