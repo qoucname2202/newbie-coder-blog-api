@@ -63,6 +63,10 @@ public static class DependencyInjection
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IRoleService, RoleService>();
 
+        // Post management services
+        services.AddScoped<IPostRepository, PostRepository>();
+        services.AddScoped<IAdminPostService, AdminPostService>();
+
         return services;
     }
 }

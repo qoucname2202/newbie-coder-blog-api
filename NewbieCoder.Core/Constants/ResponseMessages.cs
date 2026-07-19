@@ -84,6 +84,35 @@ public static class ResponseMessages
     public const string SessionAlreadyRevoked = "Session has already been revoked.";
     public const string InvalidLogoutReason = "Invalid logout_reason value.";
 
+    // Post management
+    public const string PostCreatedSuccess = "Post created successfully.";
+    public const string PostUpdatedSuccess = "Post updated successfully.";
+    public const string PostDeletedSuccess = "Post deleted successfully.";
+    public const string PostRestoredSuccess = "Post restored successfully.";
+    public const string PostNotFound = "Post not found.";
+    public const string PostAlreadyDeleted = "Post is already deleted.";
+    public const string PostNotDeleted = "Post is not deleted.";
+    public const string PostTitleRequired = "Post title is required.";
+    public const string PostContentRequired = "Post content is required.";
+    public const string InvalidPostStatus = "Invalid post status.";
+    public const string InvalidPostStatusTransition = "The post status transition is invalid.";
+    public const string AuthorNotFound = "The specified author does not exist.";
+    public const string AuthorInactive = "The specified author account is inactive.";
+    public const string AuthorLocked = "The specified author account is locked.";
+    public const string InvalidAuthorSource = "Invalid author source configuration.";
+    public const string CategoryNotFound = "The specified category does not exist.";
+    public const string CategoryInactive = "The specified category is inactive.";
+    public const string TagNotFound = "One or more specified tags do not exist.";
+    public const string TagInactive = "One or more specified tags are inactive.";
+    public const string InvalidTagIds = "One or more tag IDs are invalid.";
+    public const string PostSlugAlreadyExists = "A post with this slug already exists.";
+    public const string PostCreateFailed = "Failed to create post.";
+    public const string PostUpdateFailed = "Failed to update post.";
+    public const string PostDeleteFailed = "Failed to delete post.";
+    public const string PostRestoreFailed = "Failed to restore post.";
+    public const string PostConcurrencyConflict = "Post was modified by another user. Please refresh and try again.";
+    public const string InvalidPostVisibility = "Invalid post visibility.";
+
     // Update profile
     public const string EmptyUpdateBody = "No update fields provided.";
     public const string InvalidUpdateField = "One or more fields are not allowed to be updated via this endpoint.";

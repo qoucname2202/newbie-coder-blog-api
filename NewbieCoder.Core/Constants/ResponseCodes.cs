@@ -92,6 +92,31 @@ public static class ResponseCodes
     public const string RoleAssignSuccess = "00020600";
     public const string RoleRevokeSuccess = "00020622";
 
+    // Post management
+    public const string PostNotFound = "00020701";
+    public const string PostAlreadyDeleted = "00020702";
+    public const string PostNotDeleted = "00020703";
+    public const string PostTitleRequired = "00020704";
+    public const string PostContentRequired = "00020705";
+    public const string InvalidPostStatus = "00020706";
+    public const string InvalidPostStatusTransition = "00020707";
+    public const string AuthorNotFound = "00020708";
+    public const string AuthorInactive = "00020709";
+    public const string AuthorLocked = "00020710";
+    public const string InvalidAuthorSource = "00020711";
+    public const string CategoryNotFound = "00020712";
+    public const string CategoryInactive = "00020713";
+    public const string TagNotFound = "00020714";
+    public const string TagInactive = "00020715";
+    public const string InvalidTagIds = "00020716";
+    public const string PostSlugAlreadyExists = "00020717";
+    public const string PostCreateFailed = "00020718";
+    public const string PostUpdateFailed = "00020719";
+    public const string PostDeleteFailed = "00020720";
+    public const string PostRestoreFailed = "00020721";
+    public const string PostConcurrencyConflict = "00020722";
+    public const string InvalidPostVisibility = "00020723";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>
@@ -189,6 +214,31 @@ public static class ResponseCodes
         CannotRevokeOwnRole => HttpStatusCodes.Forbidden,
         RoleAssignSuccess => HttpStatusCodes.Ok,
         RoleRevokeSuccess => HttpStatusCodes.Ok,
+
+        // Post management
+        PostNotFound => HttpStatusCodes.NotFound,
+        PostAlreadyDeleted => HttpStatusCodes.Conflict,
+        PostNotDeleted => HttpStatusCodes.Conflict,
+        PostTitleRequired => HttpStatusCodes.BadRequest,
+        PostContentRequired => HttpStatusCodes.BadRequest,
+        InvalidPostStatus => HttpStatusCodes.BadRequest,
+        InvalidPostStatusTransition => HttpStatusCodes.Conflict,
+        AuthorNotFound => HttpStatusCodes.NotFound,
+        AuthorInactive => HttpStatusCodes.BadRequest,
+        AuthorLocked => HttpStatusCodes.Forbidden,
+        InvalidAuthorSource => HttpStatusCodes.BadRequest,
+        CategoryNotFound => HttpStatusCodes.NotFound,
+        CategoryInactive => HttpStatusCodes.BadRequest,
+        TagNotFound => HttpStatusCodes.NotFound,
+        TagInactive => HttpStatusCodes.BadRequest,
+        InvalidTagIds => HttpStatusCodes.BadRequest,
+        PostSlugAlreadyExists => HttpStatusCodes.Conflict,
+        PostCreateFailed => HttpStatusCodes.InternalServerError,
+        PostUpdateFailed => HttpStatusCodes.InternalServerError,
+        PostDeleteFailed => HttpStatusCodes.InternalServerError,
+        PostRestoreFailed => HttpStatusCodes.InternalServerError,
+        PostConcurrencyConflict => HttpStatusCodes.Conflict,
+        InvalidPostVisibility => HttpStatusCodes.BadRequest,
 
         _ => HttpStatusCodes.InternalServerError
     };
