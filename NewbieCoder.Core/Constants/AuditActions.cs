@@ -32,4 +32,5 @@ public static class AuditActions
     public const string PostDeletedByAdmin = "POST_DELETED_BY_ADMIN";
     public const string PostRestoredByAdmin = "POST_RESTORED_BY_ADMIN";
     public const string PostPublishedByAdmin = "POST_PUBLISHED_BY_ADMIN";
+    public const string PostVisibilityChanged = "POST_VISIBILITY_CHANGED";
 }

@@ -245,6 +245,48 @@ public sealed class AdminPostsController : ControllerBase
 
     #endregion
 
+    #region Change Post Status
+
+    /// <summary>
+    /// Changes a post's visibility status (Published &lt;-&gt; Hidden, Draft -&gt; Published, Published -&gt; Archived).
+    /// </summary>
+    /// <param name="postId">The ID of the post.</param>
+    /// <param name="request">The target status.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    [HttpPatch("{postId:long}/status")]
+    [ProducesResponseType(typeof(ApiResponse<ChangePostStatusResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ChangePostStatus(
+        [FromRoute] long postId,
+        [FromBody] ChangePostStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        var trace = HttpContext.GetRequestTrace();
+        var requesterId = GetRequiredUserId();
+        var ipAddress = GetClientIp();
+        var userAgent = Request.Headers.UserAgent.FirstOrDefault();
+
+        var result = await _postService.ChangePostStatusAsync(
+            postId,
+            request,
+            changedByUserId: requesterId,
+            ipAddress: ipAddress,
+            userAgent: userAgent,
+            traceId: trace,
+            cancellationToken: cancellationToken);
+
+        return Ok(ApiResponse<ChangePostStatusResponse>.Success(
+            result,
+            trace,
+            ResponseMessages.Success));
+    }
+
+    #endregion
+
     #region Private Helpers
 
     private long GetRequiredUserId()

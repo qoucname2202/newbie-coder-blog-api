@@ -112,6 +112,8 @@ public static class ResponseMessages
     public const string PostRestoreFailed = "Failed to restore post.";
     public const string PostConcurrencyConflict = "Post was modified by another user. Please refresh and try again.";
     public const string InvalidPostVisibility = "Invalid post visibility.";
+    public const string PostAlreadyInTargetStatus = "Post is already in the target status.";
+    public const string PostStatusUpdateFailed = "Failed to update post status.";
 
     // Update profile
     public const string EmptyUpdateBody = "No update fields provided.";
