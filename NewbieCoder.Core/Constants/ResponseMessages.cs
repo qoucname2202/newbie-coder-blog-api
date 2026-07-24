@@ -142,6 +142,44 @@ public static class ResponseMessages
     public const string InterviewQuestionStatusUpdateFailed = "Failed to update interview question status.";
     public const string InterviewQuestionsRetrievedSuccess = "Interview questions retrieved successfully.";
 
+    // Category management
+    public const string CategoryCreatedSuccess = "Category created successfully.";
+    public const string CategoryUpdatedSuccess = "Category updated successfully.";
+    public const string CategoryDeletedSuccess = "Category deleted successfully.";
+    public const string CategoryRetrievedSuccess = "Category retrieved successfully.";
+    public const string CategoryNameRequired = "Category name is required.";
+    public const string CategorySlugRequired = "Category slug is required.";
+    public const string CategorySlugAlreadyExists = "A category with this slug already exists.";
+    public const string CategoryInvalidStatus = "Invalid category status.";
+    public const string CategoryAlreadyInTargetStatus = "Category is already in the target status.";
+    public const string CategoryStatusUpdateFailed = "Failed to update category status.";
+    public const string CategoryCreateFailed = "Failed to create category.";
+    public const string CategoryUpdateFailed = "Failed to update category.";
+    public const string CategoryDeleteFailed = "Failed to delete category.";
+    public const string CategoryHasChildren = "Cannot delete category that has child categories.";
+    public const string CategoryHasPosts = "Cannot delete category that has associated posts.";
+
+    // Tag management
+    public const string TagCreatedSuccess = "Tag created successfully.";
+    public const string TagUpdatedSuccess = "Tag updated successfully.";
+    public const string TagDeletedSuccess = "Tag deleted successfully.";
+    public const string TagMergedSuccess = "Tag merged successfully.";
+    public const string TagRetrievedSuccess = "Tag retrieved successfully.";
+    public const string TagNameRequired = "Tag name is required.";
+    public const string TagSlugRequired = "Tag slug is required.";
+    public const string TagSlugAlreadyExists = "A tag with this slug already exists.";
+    public const string TagInvalidStatus = "Invalid tag status.";
+    public const string TagAlreadyInTargetStatus = "Tag is already in the target status.";
+    public const string TagStatusUpdateFailed = "Failed to update tag status.";
+    public const string TagCreateFailed = "Failed to create tag.";
+    public const string TagUpdateFailed = "Failed to update tag.";
+    public const string TagDeleteFailed = "Failed to delete tag.";
+    public const string TagMergeFailed = "Failed to merge tag.";
+    public const string TagNotMergeableWithSelf = "Cannot merge a tag with itself.";
+    public const string TagSourceNotFound = "Source tag not found.";
+    public const string TagTargetNotFound = "Target tag not found.";
+    public const string TagHasNoAssociations = "Tag has no associated posts or questions.";
+
     // Update profile
     public const string EmptyUpdateBody = "No update fields provided.";
     public const string InvalidUpdateField = "One or more fields are not allowed to be updated via this endpoint.";

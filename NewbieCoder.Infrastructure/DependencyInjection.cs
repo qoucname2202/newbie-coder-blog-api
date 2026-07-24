@@ -73,6 +73,14 @@ public static class DependencyInjection
         services.AddScoped<IInterviewQuestionRepository, InterviewQuestionRepository>();
         services.AddScoped<IInterviewQuestionService, InterviewQuestionService>();
 
+        // Category management services
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<ICategoryService, CategoryService>();
+
+        // Tag management services
+        services.AddScoped<ITagRepository, TagRepository>();
+        services.AddScoped<ITagService, TagService>();
+
         return services;
     }
 }
