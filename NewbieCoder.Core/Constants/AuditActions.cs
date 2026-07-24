@@ -40,4 +40,17 @@ public static class AuditActions
     public const string InterviewQuestionDeleted = "INTERVIEW_QUESTION_DELETED";
     public const string InterviewQuestionRestored = "INTERVIEW_QUESTION_RESTORED";
     public const string InterviewQuestionStatusChanged = "INTERVIEW_QUESTION_STATUS_CHANGED";
+
+    // Category management
+    public const string CategoryCreated = "CATEGORY_CREATED";
+    public const string CategoryUpdated = "CATEGORY_UPDATED";
+    public const string CategoryDeleted = "CATEGORY_DELETED";
+    public const string CategoryStatusChanged = "CATEGORY_STATUS_CHANGED";
+
+    // Tag management
+    public const string TagCreated = "TAG_CREATED";
+    public const string TagUpdated = "TAG_UPDATED";
+    public const string TagDeleted = "TAG_DELETED";
+    public const string TagStatusChanged = "TAG_STATUS_CHANGED";
+    public const string TagMerged = "TAG_MERGED";
 }

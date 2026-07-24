@@ -140,6 +140,35 @@ public static class ResponseCodes
     public const string InterviewQuestionRestoreFailed = "00020753";
     public const string InterviewQuestionStatusUpdateFailed = "00020754";
 
+    // Category management
+    public const string CategoryNameRequired = "00020801";
+    public const string CategorySlugRequired = "00020802";
+    public const string CategorySlugAlreadyExists = "00020803";
+    public const string CategoryInvalidStatus = "00020804";
+    public const string CategoryAlreadyInTargetStatus = "00020805";
+    public const string CategoryStatusUpdateFailed = "00020806";
+    public const string CategoryCreateFailed = "00020807";
+    public const string CategoryUpdateFailed = "00020808";
+    public const string CategoryDeleteFailed = "00020809";
+    public const string CategoryHasChildren = "00020810";
+    public const string CategoryHasPosts = "00020811";
+
+    // Tag management
+    public const string TagNameRequired = "00020901";
+    public const string TagSlugRequired = "00020902";
+    public const string TagSlugAlreadyExists = "00020903";
+    public const string TagInvalidStatus = "00020904";
+    public const string TagAlreadyInTargetStatus = "00020905";
+    public const string TagStatusUpdateFailed = "00020906";
+    public const string TagCreateFailed = "00020907";
+    public const string TagUpdateFailed = "00020908";
+    public const string TagDeleteFailed = "00020909";
+    public const string TagSourceNotFound = "00020910";
+    public const string TagTargetNotFound = "00020911";
+    public const string TagNotMergeableWithSelf = "00020912";
+    public const string TagHasNoAssociations = "00020913";
+    public const string TagMergeFailed = "00020914";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>
@@ -285,6 +314,35 @@ public static class ResponseCodes
         InterviewQuestionDeleteFailed => HttpStatusCodes.InternalServerError,
         InterviewQuestionRestoreFailed => HttpStatusCodes.InternalServerError,
         InterviewQuestionStatusUpdateFailed => HttpStatusCodes.InternalServerError,
+
+        // Category management
+        CategoryNameRequired => HttpStatusCodes.BadRequest,
+        CategorySlugRequired => HttpStatusCodes.BadRequest,
+        CategorySlugAlreadyExists => HttpStatusCodes.Conflict,
+        CategoryInvalidStatus => HttpStatusCodes.BadRequest,
+        CategoryAlreadyInTargetStatus => HttpStatusCodes.Conflict,
+        CategoryStatusUpdateFailed => HttpStatusCodes.InternalServerError,
+        CategoryCreateFailed => HttpStatusCodes.InternalServerError,
+        CategoryUpdateFailed => HttpStatusCodes.InternalServerError,
+        CategoryDeleteFailed => HttpStatusCodes.InternalServerError,
+        CategoryHasChildren => HttpStatusCodes.Conflict,
+        CategoryHasPosts => HttpStatusCodes.Conflict,
+
+        // Tag management
+        TagNameRequired => HttpStatusCodes.BadRequest,
+        TagSlugRequired => HttpStatusCodes.BadRequest,
+        TagSlugAlreadyExists => HttpStatusCodes.Conflict,
+        TagInvalidStatus => HttpStatusCodes.BadRequest,
+        TagAlreadyInTargetStatus => HttpStatusCodes.Conflict,
+        TagStatusUpdateFailed => HttpStatusCodes.InternalServerError,
+        TagCreateFailed => HttpStatusCodes.InternalServerError,
+        TagUpdateFailed => HttpStatusCodes.InternalServerError,
+        TagDeleteFailed => HttpStatusCodes.InternalServerError,
+        TagMergeFailed => HttpStatusCodes.InternalServerError,
+        TagNotMergeableWithSelf => HttpStatusCodes.BadRequest,
+        TagSourceNotFound => HttpStatusCodes.NotFound,
+        TagTargetNotFound => HttpStatusCodes.NotFound,
+        TagHasNoAssociations => HttpStatusCodes.Conflict,
 
         _ => HttpStatusCodes.InternalServerError
     };
