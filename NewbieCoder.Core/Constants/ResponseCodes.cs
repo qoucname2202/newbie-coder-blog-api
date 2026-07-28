@@ -169,6 +169,17 @@ public static class ResponseCodes
     public const string TagHasNoAssociations = "00020913";
     public const string TagMergeFailed = "00020914";
 
+    // Level management
+    public const string LevelNotFound = "00021001";
+    public const string LevelCodeRequired = "00021002";
+    public const string LevelNameRequired = "00021003";
+    public const string LevelCodeAlreadyExists = "00021004";
+    public const string LevelNameAlreadyExists = "00021005";
+    public const string LevelHasInterviewQuestions = "00021006";
+    public const string LevelCreateFailed = "00021007";
+    public const string LevelUpdateFailed = "00021008";
+    public const string LevelDeleteFailed = "00021009";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>
@@ -343,6 +354,17 @@ public static class ResponseCodes
         TagSourceNotFound => HttpStatusCodes.NotFound,
         TagTargetNotFound => HttpStatusCodes.NotFound,
         TagHasNoAssociations => HttpStatusCodes.Conflict,
+
+        // Level management
+        LevelNotFound => HttpStatusCodes.NotFound,
+        LevelCodeRequired => HttpStatusCodes.BadRequest,
+        LevelNameRequired => HttpStatusCodes.BadRequest,
+        LevelCodeAlreadyExists => HttpStatusCodes.Conflict,
+        LevelNameAlreadyExists => HttpStatusCodes.Conflict,
+        LevelHasInterviewQuestions => HttpStatusCodes.Conflict,
+        LevelCreateFailed => HttpStatusCodes.InternalServerError,
+        LevelUpdateFailed => HttpStatusCodes.InternalServerError,
+        LevelDeleteFailed => HttpStatusCodes.InternalServerError,
 
         _ => HttpStatusCodes.InternalServerError
     };

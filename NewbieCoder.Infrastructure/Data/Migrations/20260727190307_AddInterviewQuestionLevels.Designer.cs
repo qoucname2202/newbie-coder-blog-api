@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NewbieCoder.Infrastructure.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NewbieCoder.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727190307_AddInterviewQuestionLevels")]
+    partial class AddInterviewQuestionLevels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -501,33 +504,7 @@ namespace NewbieCoder.Infrastructure.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("NewbieCoder.Core.Entities.InterviewQuestionTag", b =>
-                {
-                    b.Property<long>("QuestionId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("question_id");
-
-                    b.Property<long>("TagId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("tag_id");
-
-                    b.Property<DateTimeOffset>("EffDate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("eff_date")
-                        .HasDefaultValueSql("date_trunc('day', now())");
-
-                    b.HasKey("QuestionId", "TagId");
-
-                    b.HasIndex("TagId");
-
-                    b.HasIndex("QuestionId", "TagId")
-                        .IsUnique();
-
-                    b.ToTable("interview_question_tags", (string)null);
-                });
-
-            modelBuilder.Entity("NewbieCoder.Core.Entities.Level", b =>
+            modelBuilder.Entity("NewbieCoder.Core.Entities.InterviewQuestionLevel", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -557,13 +534,12 @@ namespace NewbieCoder.Infrastructure.Data.Migrations
                         .HasColumnName("deleted_by");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
                         .HasColumnName("description");
 
                     b.Property<int>("DisplayOrder")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(0)
                         .HasColumnName("display_order");
 
                     b.Property<DateTimeOffset>("EffDate")
@@ -578,32 +554,75 @@ namespace NewbieCoder.Infrastructure.Data.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("is_active");
 
+                    b.Property<bool>("IsSystem")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_system");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
+                    b.Property<int>("QuestionCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("question_count");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("deleted_at IS NULL");
 
                     b.HasIndex("DeletedAt")
                         .HasFilter("deleted_at IS NULL");
 
-                    b.HasIndex("IsActive");
+                    b.HasIndex("DisplayOrder")
+                        .IsUnique()
+                        .HasFilter("deleted_at IS NULL");
 
-                    b.HasIndex("Name");
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasFilter("deleted_at IS NULL");
 
-                    b.ToTable("levels", null, t =>
+                    b.HasIndex("DeletedAt", "IsActive", "DisplayOrder");
+
+                    b.ToTable("interview_question_levels", null, t =>
                         {
-                            t.HasCheckConstraint("ck_levels_code", "code = upper(code)");
+                            t.HasCheckConstraint("ck_iql_display_order", "display_order > 0");
 
-                            t.HasCheckConstraint("ck_levels_display_order", "display_order >= 0");
-
-                            t.HasCheckConstraint("ck_levels_is_active", "is_active IN (true, false)");
+                            t.HasCheckConstraint("ck_iql_question_count", "question_count >= 0");
                         });
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.InterviewQuestionTag", b =>
+                {
+                    b.Property<long>("QuestionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("question_id");
+
+                    b.Property<long>("TagId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tag_id");
+
+                    b.Property<DateTimeOffset>("EffDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eff_date")
+                        .HasDefaultValueSql("date_trunc('day', now())");
+
+                    b.HasKey("QuestionId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.HasIndex("QuestionId", "TagId")
+                        .IsUnique();
+
+                    b.ToTable("interview_question_tags", (string)null);
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.LoginHistory", b =>
@@ -1993,8 +2012,8 @@ namespace NewbieCoder.Infrastructure.Data.Migrations
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("NewbieCoder.Core.Entities.Level", "LevelEntity")
-                        .WithMany("InterviewQuestions")
+                    b.HasOne("NewbieCoder.Core.Entities.InterviewQuestionLevel", "LevelEntity")
+                        .WithMany("Questions")
                         .HasForeignKey("LevelId")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -2242,9 +2261,9 @@ namespace NewbieCoder.Infrastructure.Data.Migrations
                     b.Navigation("InterviewQuestionTags");
                 });
 
-            modelBuilder.Entity("NewbieCoder.Core.Entities.Level", b =>
+            modelBuilder.Entity("NewbieCoder.Core.Entities.InterviewQuestionLevel", b =>
                 {
-                    b.Navigation("InterviewQuestions");
+                    b.Navigation("Questions");
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.Post", b =>

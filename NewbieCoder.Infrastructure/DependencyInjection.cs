@@ -81,6 +81,10 @@ public static class DependencyInjection
         services.AddScoped<ITagRepository, TagRepository>();
         services.AddScoped<ITagService, TagService>();
 
+        // Level management services
+        services.AddScoped<ILevelRepository, LevelRepository>();
+        services.AddScoped<ILevelService, LevelService>();
+
         return services;
     }
 }

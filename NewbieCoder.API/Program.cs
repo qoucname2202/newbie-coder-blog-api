@@ -47,6 +47,7 @@ var seedEnabled = builder.Configuration.GetValue<bool>("SeedData:Enabled");
 if (seedEnabled)
 {
     builder.Services.AddScoped<AuthDbSeeder>();
+    builder.Services.AddScoped<LevelSeeder>();
 }
 
 var app = builder.Build();
@@ -133,6 +134,9 @@ if (seedEnabled)
         using var scope = app.Services.CreateScope();
         var seeder = scope.ServiceProvider.GetRequiredService<AuthDbSeeder>();
         await seeder.SeedAsync();
+
+        var levelSeeder = scope.ServiceProvider.GetRequiredService<LevelSeeder>();
+        await levelSeeder.SeedAsync();
     }
     catch (Exception ex)
     {

@@ -186,4 +186,17 @@ public static class ResponseMessages
     public const string UpdateProfileSuccess = "Personal information updated successfully.";
     public const string UpdateValidationFailed = "Invalid update data.";
     public const string SessionInvalid = "Invalid session.";
+
+    // Level management
+    public const string LevelCreatedSuccess = "Level created successfully.";
+    public const string LevelUpdatedSuccess = "Level updated successfully.";
+    public const string LevelDeletedSuccess = "Level deleted successfully.";
+    public const string LevelRestoredSuccess = "Level restored successfully.";
+    public const string LevelRetrievedSuccess = "Level retrieved successfully.";
+    public const string LevelNotFound = "Level not found.";
+    public const string LevelCodeRequired = "Level code is required.";
+    public const string LevelNameRequired = "Level name is required.";
+    public const string LevelCodeAlreadyExists = "A level with this code already exists.";
+    public const string LevelNameAlreadyExists = "A level with this name already exists.";
+    public const string LevelHasInterviewQuestions = "Cannot delete level that has associated interview questions.";
 }

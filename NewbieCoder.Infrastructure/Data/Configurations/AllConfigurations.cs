@@ -600,6 +600,7 @@ public class InterviewQuestionConfig : IEntityTypeConfiguration<InterviewQuestio
         b.Property(x => x.Explanation).HasColumnName("explanation").HasColumnType("text");
 
         b.Property(x => x.Level).HasColumnName("level").HasConversion(EnumStringConverters.InterviewLevelConverter).IsRequired();
+        b.Property(x => x.LevelId).HasColumnName("level_id");
 
         b.Property(x => x.Technology).HasColumnName("technology").HasMaxLength(100);
         b.Property(x => x.Topic).HasColumnName("topic").HasMaxLength(100);
@@ -864,5 +865,56 @@ public class SeedFlagConfig : IEntityTypeConfiguration<SeedFlag>
         b.HasKey(x => x.Key);
         b.Property(x => x.Key).HasColumnName("key").HasMaxLength(255);
         b.Property(x => x.SeededAt).HasColumnName("seeded_at");
+    }
+}
+
+// ============================================================
+// 25. levels
+// ============================================================
+public class LevelConfig : IEntityTypeConfiguration<Level>
+{
+    public void Configure(EntityTypeBuilder<Level> b)
+    {
+        b.ToTable("levels");
+        PgConfig.Base(b);
+
+        b.Property(x => x.Code)
+            .HasColumnName("code")
+            .HasMaxLength(50)
+            .IsRequired();
+
+        b.Property(x => x.Name)
+            .HasColumnName("name")
+            .HasMaxLength(100)
+            .IsRequired();
+
+        b.Property(x => x.Description)
+            .HasColumnName("description")
+            .HasColumnType("text");
+
+        b.Property(x => x.DisplayOrder)
+            .HasColumnName("display_order")
+            .HasDefaultValue(0);
+
+        b.Property(x => x.IsActive)
+            .HasColumnName("is_active")
+            .HasDefaultValue(true);
+
+        b.HasIndex(x => x.Code).IsUnique();
+        b.HasIndex(x => x.Name);
+        b.HasIndex(x => x.IsActive);
+
+        b.ToTable(t =>
+        {
+            t.HasCheckConstraint("ck_levels_code", "code = upper(code)");
+            t.HasCheckConstraint("ck_levels_display_order", "display_order >= 0");
+            t.HasCheckConstraint("ck_levels_is_active", "is_active IN (true, false)");
+        });
+
+        // FK: level_id on interview_questions -> levels.id, ON DELETE RESTRICT
+        b.HasMany(x => x.InterviewQuestions)
+            .WithOne(x => x.LevelEntity)
+            .HasForeignKey(x => x.LevelId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

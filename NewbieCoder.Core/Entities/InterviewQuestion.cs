@@ -9,6 +9,7 @@ namespace NewbieCoder.Core.Entities
         public string QuestionContent { get; set; } = null!;
         public string? Explanation { get; set; }
         public InterviewLevel Level { get; set; }
+        public long? LevelId { get; set; }
         public string? Technology { get; set; }
         public string? Topic { get; set; }
         public PostStatus Status { get; set; } = PostStatus.Draft;
@@ -17,6 +18,7 @@ namespace NewbieCoder.Core.Entities
         public int BookmarkCount { get; set; }
         public DateTimeOffset? PublishedAt { get; set; }
         public User? Author { get; set; }
+        public Level? LevelEntity { get; set; }
         public ICollection<InterviewAnswer> Answers { get; set; } = new List<InterviewAnswer>();
         public ICollection<InterviewQuestionTag> InterviewQuestionTags { get; set; } = new List<InterviewQuestionTag>();
     }

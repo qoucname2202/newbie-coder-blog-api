@@ -53,4 +53,10 @@ public static class AuditActions
     public const string TagDeleted = "TAG_DELETED";
     public const string TagStatusChanged = "TAG_STATUS_CHANGED";
     public const string TagMerged = "TAG_MERGED";
+
+    // Level management
+    public const string LevelCreated = "LEVEL_CREATED";
+    public const string LevelUpdated = "LEVEL_UPDATED";
+    public const string LevelDeleted = "LEVEL_DELETED";
+    public const string LevelRestored = "LEVEL_RESTORED";
 }
