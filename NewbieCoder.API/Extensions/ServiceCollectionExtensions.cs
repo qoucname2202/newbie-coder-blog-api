@@ -1,9 +1,12 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NewbieCoder.API.Authorization;
 using NewbieCoder.API.Middlewares;
+using NewbieCoder.API.Validators;
 using NewbieCoder.Core.Constants;
 using NewbieCoder.Infrastructure;
 using NewbieCoder.Infrastructure.Services;
@@ -62,11 +65,14 @@ public static class ServiceCollectionExtensions
             });
 
         services.AddAuthorization(options => options.AddApiAuthorization());
-        services.AddControllers().AddJsonOptions(options =>
-        {
-            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-            options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-        });
+        services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+            });
+        services.AddValidatorsFromAssemblyContaining<CreateLevelRequestValidator>();
+        services.AddFluentValidationAutoValidation();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {
