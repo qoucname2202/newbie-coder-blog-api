@@ -32,6 +32,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<CommunityAnswer> CommunityAnswers => Set<CommunityAnswer>();
     public DbSet<CommunityQuestionTag> CommunityQuestionTags => Set<CommunityQuestionTag>();
     public DbSet<SeedFlag> SeedFlags => Set<SeedFlag>();
+    public DbSet<Level> Levels => Set<Level>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

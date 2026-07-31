@@ -6,7 +6,7 @@ public enum DeviceType             { Web = 1, Mobile = 2, Tablet = 3, Desktop = 
 public enum EntityStatus           { Active = 1, Inactive = 2 }
 public enum InterviewLevel         { Entry = 1, Junior = 2, Middle = 3, Senior = 4, Expert = 5 }
 public enum LoginStatus            { Success = 1, Failed = 2 }
-public enum PostStatus             { Draft = 1, Pending = 2, Published = 3, Rejected = 4, Hidden = 5, Deleted = 6 }
+public enum PostStatus             { Draft = 1, Pending = 2, Published = 3, Rejected = 4, Hidden = 5, Deleted = 6, Archived = 7 }
 public enum PostVisibility         { Public = 1, Private = 2, LinkOnly = 3 }
 public enum RoleStatus             { Active = 1, Inactive = 2 }
 public enum SessionStatus          { Active = 1, Expired = 2, Revoked = 3 }

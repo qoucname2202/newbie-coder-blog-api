@@ -1,9 +1,13 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NewbieCoder.API.Authorization;
 using NewbieCoder.API.Middlewares;
+using NewbieCoder.API.Validators;
 using NewbieCoder.Core.Constants;
 using NewbieCoder.Infrastructure;
 using NewbieCoder.Infrastructure.Services;
@@ -62,11 +66,46 @@ public static class ServiceCollectionExtensions
             });
 
         services.AddAuthorization(options => options.AddApiAuthorization());
-        services.AddControllers().AddJsonOptions(options =>
-        {
-            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-            options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-        });
+        services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+            })
+            .ConfigureApiBehaviorOptions(options =>
+            {
+                options.InvalidModelStateResponseFactory = context =>
+                {
+                    var trace = context.HttpContext.GetRequestTrace();
+                    var errors = context.ModelState
+                        .Where(e => e.Value?.Errors.Count > 0)
+                        .SelectMany(e => e.Value!.Errors.Select(err => new
+                        {
+                            Field = e.Key,
+                            Message = err.ErrorMessage
+                        }))
+                        .ToList();
+
+                    var response = new
+                    {
+                        RequestTrace = trace,
+                        ResponseDateTime = DateTimeOffset.Now.ToString("yyyy-MM-dd'T'HH:mm:sszzz"),
+                        ResponseData = (object?)errors,
+                        ResponseStatus = new
+                        {
+                            ResponseCode = ResponseCodes.ValidationError,
+                            ResponseMessage = "Validation failed. See responseData for details.",
+                            TracingMessage = (string?)null
+                        }
+                    };
+
+                    context.HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+                    context.HttpContext.Response.ContentType = "application/json";
+                    return new JsonResult(response) { StatusCode = 400 };
+                };
+            });
+        services.AddValidatorsFromAssemblyContaining<CreateLevelRequestValidator>();
+        services.AddFluentValidationAutoValidation();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {

@@ -14,4 +14,69 @@ public static class AuditActions
     public const string UserRegistered = "USER_REGISTERED";
     public const string DeviceBlocked = "DEVICE_BLOCKED";
     public const string DeviceRemoved = "DEVICE_REMOVED";
+
+    // Role management
+    public const string RoleCreated = "ROLE_CREATED";
+    public const string RoleUpdated = "ROLE_UPDATED";
+    public const string RoleDeleted = "ROLE_DELETED";
+    public const string RoleActivated = "ROLE_ACTIVATED";
+    public const string RoleDeactivated = "ROLE_DEACTIVATED";
+    public const string UserRoleAssigned = "USER_ROLE_ASSIGNED";
+    public const string UserRoleRevoked = "USER_ROLE_REVOKED";
+
+    // Post management
+    public const string PostCreatedByAdmin = "POST_CREATED_BY_ADMIN";
+    public const string SystemPostCreated = "SYSTEM_POST_CREATED";
+    public const string PostCreatedForAuthor = "POST_CREATED_FOR_AUTHOR";
+    public const string PostUpdatedByAdmin = "POST_UPDATED_BY_ADMIN";
+    public const string PostDeletedByAdmin = "POST_DELETED_BY_ADMIN";
+    public const string PostRestoredByAdmin = "POST_RESTORED_BY_ADMIN";
+    public const string PostPublishedByAdmin = "POST_PUBLISHED_BY_ADMIN";
+    public const string PostVisibilityChanged = "POST_VISIBILITY_CHANGED";
+
+    // Interview question management
+    public const string InterviewQuestionCreated = "INTERVIEW_QUESTION_CREATED";
+    public const string InterviewQuestionUpdated = "INTERVIEW_QUESTION_UPDATED";
+    public const string InterviewQuestionDeleted = "INTERVIEW_QUESTION_DELETED";
+    public const string InterviewQuestionRestored = "INTERVIEW_QUESTION_RESTORED";
+    public const string InterviewQuestionStatusChanged = "INTERVIEW_QUESTION_STATUS_CHANGED";
+
+    // Category management
+    public const string CategoryCreated = "CATEGORY_CREATED";
+    public const string CategoryUpdated = "CATEGORY_UPDATED";
+    public const string CategoryDeleted = "CATEGORY_DELETED";
+    public const string CategoryStatusChanged = "CATEGORY_STATUS_CHANGED";
+
+    // Tag management
+    public const string TagCreated = "TAG_CREATED";
+    public const string TagUpdated = "TAG_UPDATED";
+    public const string TagDeleted = "TAG_DELETED";
+    public const string TagStatusChanged = "TAG_STATUS_CHANGED";
+    public const string TagMerged = "TAG_MERGED";
+
+    // Level management
+    public const string LevelCreated = "LEVEL_CREATED";
+    public const string LevelUpdated = "LEVEL_UPDATED";
+    public const string LevelDeleted = "LEVEL_DELETED";
+    public const string LevelRestored = "LEVEL_RESTORED";
+
+    // Community question management
+    public const string CommunityQuestionLocked = "COMMUNITY_QUESTION_LOCKED";
+    public const string CommunityQuestionUnlocked = "COMMUNITY_QUESTION_UNLOCKED";
+    public const string CommunityQuestionDeleted = "COMMUNITY_QUESTION_DELETED";
+    public const string CommunityQuestionRestored = "COMMUNITY_QUESTION_RESTORED";
+    public const string CommunityQuestionCreated = "COMMUNITY_QUESTION_CREATED";
+    public const string CommunityQuestionUpdated = "COMMUNITY_QUESTION_UPDATED";
+    public const string CommunityQuestionStatusChanged = "COMMUNITY_QUESTION_STATUS_CHANGED";
+    public const string CommunityQuestionHidden = "COMMUNITY_QUESTION_HIDDEN";
+    public const string CommunityQuestionClosed = "COMMUNITY_QUESTION_CLOSED";
+    public const string CommunityQuestionReopened = "COMMUNITY_QUESTION_REOPENED";
+
+    // Community answer management
+    public const string CommunityAnswerHidden = "COMMUNITY_ANSWER_HIDDEN";
+    public const string CommunityAnswerShown = "COMMUNITY_ANSWER_SHOWN";
+    public const string CommunityAnswerDeleted = "COMMUNITY_ANSWER_DELETED";
+    public const string CommunityAnswerRestored = "COMMUNITY_ANSWER_RESTORED";
+    public const string CommunityAnswerCreated = "COMMUNITY_ANSWER_CREATED";
+    public const string CommunityAnswerUpdated = "COMMUNITY_ANSWER_UPDATED";
 }

@@ -155,7 +155,7 @@ public static class EnumStringConverters
     public static readonly ValueConverter<NewbieCoder.Core.Enums.EntityStatus, string> EntityStatusConverter =
         new(v => ToDbString(v), s => FromDbStringEntityStatus(s));
 
-    // ── PostStatus  ('draft','pending','published','rejected','hidden','deleted') ─
+    // ── PostStatus  ('draft','pending','published','rejected','hidden','deleted','archived') ─
     public static string ToDbString(NewbieCoder.Core.Enums.PostStatus v) => v switch
     {
         NewbieCoder.Core.Enums.PostStatus.Draft     => "draft",
@@ -164,6 +164,7 @@ public static class EnumStringConverters
         NewbieCoder.Core.Enums.PostStatus.Rejected  => "rejected",
         NewbieCoder.Core.Enums.PostStatus.Hidden    => "hidden",
         NewbieCoder.Core.Enums.PostStatus.Deleted   => "deleted",
+        NewbieCoder.Core.Enums.PostStatus.Archived => "archived",
         _ => throw new ArgumentOutOfRangeException(nameof(v), v, null)
     };
     public static NewbieCoder.Core.Enums.PostStatus FromDbStringPostStatus(string s) => s switch
@@ -174,6 +175,7 @@ public static class EnumStringConverters
         "rejected"  => NewbieCoder.Core.Enums.PostStatus.Rejected,
         "hidden"    => NewbieCoder.Core.Enums.PostStatus.Hidden,
         "deleted"   => NewbieCoder.Core.Enums.PostStatus.Deleted,
+        "archived"  => NewbieCoder.Core.Enums.PostStatus.Archived,
         _ => throw new ArgumentException("Invalid PostStatus: " + s, nameof(s))
     };
     public static readonly ValueConverter<NewbieCoder.Core.Enums.PostStatus, string> PostStatusConverter =

@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NewbieCoder.Infrastructure.Migrations
+namespace NewbieCoder.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     partial class AppDbContextModelSnapshot : ModelSnapshot
@@ -151,6 +151,12 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("is_accepted");
+
+                    b.Property<bool>("IsHidden")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_hidden");
 
                     b.Property<long>("QuestionId")
                         .HasColumnType("bigint")
@@ -407,10 +413,18 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnName("eff_date")
                         .HasDefaultValueSql("date_trunc('day', now())");
 
+                    b.Property<string>("Explanation")
+                        .HasColumnType("text")
+                        .HasColumnName("explanation");
+
                     b.Property<string>("Level")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("level");
+
+                    b.Property<long?>("LevelId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("level_id");
 
                     b.Property<DateTimeOffset?>("PublishedAt")
                         .HasColumnType("timestamp with time zone")
@@ -433,6 +447,11 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasDefaultValue("draft")
                         .HasColumnName("status");
+
+                    b.Property<string>("Technology")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("technology");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -466,10 +485,19 @@ namespace NewbieCoder.Infrastructure.Migrations
 
                     b.HasIndex("Level");
 
+                    b.HasIndex("LevelId");
+
                     b.HasIndex("Slug")
                         .IsUnique();
 
                     b.HasIndex("Status");
+
+                    b.HasIndex("Technology");
+
+                    b.HasIndex("Topic");
+
+                    b.HasIndex("Status", "DeletedAt")
+                        .HasFilter("deleted_at IS NULL");
 
                     b.ToTable("interview_questions", null, t =>
                         {
@@ -499,7 +527,89 @@ namespace NewbieCoder.Infrastructure.Migrations
 
                     b.HasIndex("TagId");
 
+                    b.HasIndex("QuestionId", "TagId")
+                        .IsUnique();
+
                     b.ToTable("interview_question_tags", (string)null);
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.Level", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("DateLastMaint")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_last_maint")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<long?>("DeletedBy")
+                        .HasColumnType("bigint")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("display_order");
+
+                    b.Property<DateTimeOffset>("EffDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eff_date")
+                        .HasDefaultValueSql("date_trunc('day', now())");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("DeletedAt")
+                        .HasFilter("deleted_at IS NULL");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("levels", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_levels_code", "code = upper(code)");
+
+                            t.HasCheckConstraint("ck_levels_display_order", "display_order >= 0");
+
+                            t.HasCheckConstraint("ck_levels_is_active", "is_active IN (true, false)");
+                        });
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.LoginHistory", b =>
@@ -1077,6 +1187,22 @@ namespace NewbieCoder.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("NewbieCoder.Core.Entities.SeedFlag", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("key");
+
+                    b.Property<DateTimeOffset>("SeededAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("seeded_at");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("seed_flags", (string)null);
+                });
+
             modelBuilder.Entity("NewbieCoder.Core.Entities.Series", b =>
                 {
                     b.Property<long>("Id")
@@ -1429,6 +1555,10 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("password");
 
+                    b.Property<DateTimeOffset?>("PasswordChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("password_changed_at");
+
                     b.Property<int>("PostCount")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
@@ -1487,7 +1617,6 @@ namespace NewbieCoder.Infrastructure.Migrations
                             t.HasCheckConstraint("ck_users_reputation", "reputation_score IS NULL OR reputation_score <= 100");
 
                             t.HasCheckConstraint("ck_users_status", "status IN ('ACT','INACT','BAN','CLS','LOCKED')");
-                            t.HasCheckConstraint("ck_users_status", "status IN ('ACT','INACT','BAN','CLS')");
                         });
                 });
 
@@ -1870,7 +1999,14 @@ namespace NewbieCoder.Infrastructure.Migrations
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("NewbieCoder.Core.Entities.Level", "LevelEntity")
+                        .WithMany("InterviewQuestions")
+                        .HasForeignKey("LevelId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Author");
+
+                    b.Navigation("LevelEntity");
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.InterviewQuestionTag", b =>
@@ -2110,6 +2246,11 @@ namespace NewbieCoder.Infrastructure.Migrations
                     b.Navigation("Answers");
 
                     b.Navigation("InterviewQuestionTags");
+                });
+
+            modelBuilder.Entity("NewbieCoder.Core.Entities.Level", b =>
+                {
+                    b.Navigation("InterviewQuestions");
                 });
 
             modelBuilder.Entity("NewbieCoder.Core.Entities.Post", b =>

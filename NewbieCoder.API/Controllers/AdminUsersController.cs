@@ -24,11 +24,16 @@ public sealed class AdminUsersController : ControllerBase
 {
     private readonly IUserManagementService _userManagement;
     private readonly IUserService _userService;
+    private readonly IUserRoleService _userRoleService;
 
-    public AdminUsersController(IUserManagementService userManagement, IUserService userService)
+    public AdminUsersController(
+        IUserManagementService userManagement,
+        IUserService userService,
+        IUserRoleService userRoleService)
     {
         _userManagement = userManagement;
         _userService = userService;
+        _userRoleService = userRoleService;
     }
 
     #region Lock
@@ -104,6 +109,89 @@ public sealed class AdminUsersController : ControllerBase
             result,
             trace,
             ResponseMessages.UnlockSucceeded));
+    }
+
+    #endregion
+
+    #region Assign Role
+
+    /// <summary>
+    /// Assigns a role to a user. Only accessible by Admin users.
+    /// Business rules enforced: cannot assign SuperAdmin, cannot assign a higher role than the
+    /// admin's own role, cannot remove the last Admin, cannot change your own role.
+    /// </summary>
+    /// <param name="userId">The ID of the user to assign the role to.</param>
+    /// <param name="request">The role assignment request containing the target roleId.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    [HttpPut("{userId:long}/role")]
+    [ProducesResponseType(typeof(ApiResponse<AssignUserRoleResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AssignRole(
+        [FromRoute] long userId,
+        [FromBody] AssignUserRoleRequest request,
+        CancellationToken cancellationToken)
+    {
+        var trace = HttpContext.GetRequestTrace();
+        var adminUserId = GetRequiredUserId();
+
+        var result = await _userRoleService.AssignRoleAsync(
+            targetUserId: userId,
+            request: request,
+            adminUserId: adminUserId,
+            ipAddress: GetClientIp(),
+            userAgent: Request.Headers.UserAgent.FirstOrDefault(),
+            traceId: trace,
+            cancellationToken: cancellationToken);
+
+        return Ok(ApiResponse<AssignUserRoleResponse>.Success(
+            result,
+            trace,
+            ResponseMessages.RoleAssignedSuccess));
+    }
+
+    #endregion
+
+    #region Revoke Role
+
+    /// <summary>
+    /// Revokes all elevated roles from a user and assigns them back to the base USER role.
+    /// Only accessible by Admin users.
+    /// Business rules enforced: cannot revoke your own role, cannot remove the last Admin.
+    /// </summary>
+    /// <param name="userId">The ID of the user to revoke roles from.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    [HttpDelete("{userId:long}/role")]
+    [ProducesResponseType(typeof(ApiResponse<RevokeUserRoleResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RevokeRole(
+        [FromRoute] long userId,
+        CancellationToken cancellationToken)
+    {
+        var trace = HttpContext.GetRequestTrace();
+        var adminUserId = GetRequiredUserId();
+
+        var result = await _userRoleService.RevokeRoleAsync(
+            targetUserId: userId,
+            adminUserId: adminUserId,
+            ipAddress: GetClientIp(),
+            userAgent: Request.Headers.UserAgent.FirstOrDefault(),
+            traceId: trace,
+            cancellationToken: cancellationToken);
+
+        return Ok(ApiResponse<RevokeUserRoleResponse>.Success(
+            result,
+            trace,
+            ResponseMessages.RoleRevokedSuccess));
     }
 
     #endregion

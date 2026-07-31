@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NewbieCoder.Core.Interfaces.Repositories;
 using NewbieCoder.Core.Interfaces.Services;
+using NewbieCoder.Infrastructure.CQRS.Posts;
 using NewbieCoder.Infrastructure.Data;
 using NewbieCoder.Infrastructure.Repositories;
 using NewbieCoder.Infrastructure.Services;
@@ -37,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasherService, PasswordHasherService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
+        services.AddScoped<IUserRoleService, UserRoleService>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService>(sp =>
@@ -57,6 +59,39 @@ public static class DependencyInjection
         // File upload service
   
         services.AddScoped<IFileUploadService, FileUploadService>();
+
+        // Role management services
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IRoleService, RoleService>();
+
+        // Post management services
+        services.AddScoped<IPostRepository, PostRepository>();
+        services.AddScoped<IAdminPostService, AdminPostService>();
+        services.AddScoped<ChangePostStatusCommandHandler>();
+
+        // Interview question management services
+        services.AddScoped<IInterviewQuestionRepository, InterviewQuestionRepository>();
+        services.AddScoped<IInterviewQuestionService, InterviewQuestionService>();
+
+        // Category management services
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<ICategoryService, CategoryService>();
+
+        // Tag management services
+        services.AddScoped<ITagRepository, TagRepository>();
+        services.AddScoped<ITagService, TagService>();
+
+        // Level management services
+        services.AddScoped<ILevelRepository, LevelRepository>();
+        services.AddScoped<ILevelService, LevelService>();
+
+        // Community question management services
+        services.AddScoped<ICommunityQuestionRepository, CommunityQuestionRepository>();
+        services.AddScoped<ICommunityQuestionService, CommunityQuestionService>();
+
+        // Community answer management services
+        services.AddScoped<ICommunityAnswerRepository, CommunityAnswerRepository>();
+        services.AddScoped<ICommunityAnswerService, CommunityAnswerService>();
 
         return services;
     }
