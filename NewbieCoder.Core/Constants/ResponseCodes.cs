@@ -180,6 +180,59 @@ public static class ResponseCodes
     public const string LevelUpdateFailed = "00021008";
     public const string LevelDeleteFailed = "00021009";
 
+    // Community question management
+    public const string CommunityQuestionNotFound = "00021101";
+    public const string CommunityQuestionAlreadyLocked = "00021102";
+    public const string CommunityQuestionNotLocked = "00021103";
+    public const string CommunityQuestionAlreadyDeleted = "00021104";
+    public const string CommunityQuestionNotDeleted = "00021105";
+    public const string CommunityQuestionCannotBeModerated = "00021106";
+    public const string CommunityQuestionDeleteFailed = "00021107";
+    public const string CommunityQuestionRestoreFailed = "00021108";
+    public const string CommunityQuestionLockFailed = "00021109";
+    public const string CommunityQuestionUnlockFailed = "00021110";
+    public const string CommunityQuestionAlreadyDeletedOrNotFound = "00021111";
+    public const string CommunityQuestionCreatedFailed = "00021112";
+    public const string CommunityQuestionUpdatedFailed = "00021113";
+    public const string CommunityQuestionAuthorNotFound = "00021114";
+    public const string CommunityQuestionTitleRequired = "00021115";
+    public const string CommunityQuestionContentRequired = "00021116";
+    public const string CommunityQuestionTitleTooShort = "00021117";
+    public const string CommunityQuestionTitleTooLong = "00021118";
+    public const string CommunityQuestionContentTooShort = "00021119";
+    public const string CommunityQuestionContentTooLong = "00021120";
+    public const string CommunityQuestionInvalidStatus = "00021121";
+    public const string CommunityQuestionInvalidStatusTransition = "00021122";
+    public const string CommunityQuestionAlreadyInTargetStatus = "00021123";
+    public const string CommunityQuestionStatusUpdateFailed = "00021124";
+    public const string CommunityQuestionAlreadyHidden = "00021125";
+    public const string CommunityQuestionNotHidden = "00021126";
+    public const string CommunityQuestionAlreadyClosed = "00021127";
+    public const string CommunityQuestionAlreadyOpen = "00021128";
+    public const string CommunityQuestionResolvedRequiresAcceptedAnswer = "00021129";
+    public const string CommunityQuestionAcceptedAnswerNotFound = "00021130";
+    public const string CommunityQuestionAcceptedAnswerHidden = "00021131";
+    public const string CommunityQuestionAnsweredRequiresAnswers = "00021132";
+    public const string CommunityQuestionReasonRequired = "00021133";
+    public const string CommunityQuestionUpdateFailed = "00021134";
+
+    // Community answer management
+    public const string CommunityAnswerNotFound = "00021201";
+    public const string CommunityAnswerAlreadyHidden = "00021202";
+    public const string CommunityAnswerNotHidden = "00021203";
+    public const string CommunityAnswerAlreadyDeleted = "00021204";
+    public const string CommunityAnswerNotDeleted = "00021205";
+    public const string CommunityAnswerCannotBeModerated = "00021206";
+    public const string CommunityAnswerDeleteFailed = "00021207";
+    public const string CommunityAnswerRestoreFailed = "00021208";
+    public const string CommunityAnswerHideFailed = "00021209";
+    public const string CommunityAnswerShowFailed = "00021210";
+    public const string CommunityAnswerQuestionNotFound = "00021211";
+    public const string CommunityAnswerAuthorNotFound = "00021212";
+    public const string CommunityAnswerCreateFailed = "00021213";
+    public const string CommunityAnswerUpdateFailed = "00021214";
+    public const string CommunityAnswerContentRequired = "00021215";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>
@@ -365,6 +418,59 @@ public static class ResponseCodes
         LevelCreateFailed => HttpStatusCodes.InternalServerError,
         LevelUpdateFailed => HttpStatusCodes.InternalServerError,
         LevelDeleteFailed => HttpStatusCodes.InternalServerError,
+
+        // Community question management
+        CommunityQuestionNotFound => HttpStatusCodes.NotFound,
+        CommunityQuestionAlreadyDeletedOrNotFound => HttpStatusCodes.NotFound,
+        CommunityQuestionCannotBeModerated => HttpStatusCodes.Conflict,
+        CommunityQuestionAlreadyLocked => HttpStatusCodes.Conflict,
+        CommunityQuestionNotLocked => HttpStatusCodes.Conflict,
+        CommunityQuestionAlreadyDeleted => HttpStatusCodes.Conflict,
+        CommunityQuestionNotDeleted => HttpStatusCodes.Conflict,
+        CommunityQuestionDeleteFailed => HttpStatusCodes.InternalServerError,
+        CommunityQuestionRestoreFailed => HttpStatusCodes.InternalServerError,
+        CommunityQuestionLockFailed => HttpStatusCodes.InternalServerError,
+        CommunityQuestionUnlockFailed => HttpStatusCodes.InternalServerError,
+        CommunityQuestionCreatedFailed => HttpStatusCodes.InternalServerError,
+        CommunityQuestionUpdatedFailed => HttpStatusCodes.InternalServerError,
+        CommunityQuestionAuthorNotFound => HttpStatusCodes.NotFound,
+        CommunityQuestionTitleRequired => HttpStatusCodes.BadRequest,
+        CommunityQuestionContentRequired => HttpStatusCodes.BadRequest,
+        CommunityQuestionTitleTooShort => HttpStatusCodes.BadRequest,
+        CommunityQuestionTitleTooLong => HttpStatusCodes.BadRequest,
+        CommunityQuestionContentTooShort => HttpStatusCodes.BadRequest,
+        CommunityQuestionContentTooLong => HttpStatusCodes.BadRequest,
+        CommunityQuestionInvalidStatus => HttpStatusCodes.BadRequest,
+        CommunityQuestionInvalidStatusTransition => HttpStatusCodes.Conflict,
+        CommunityQuestionAlreadyInTargetStatus => HttpStatusCodes.Conflict,
+        CommunityQuestionStatusUpdateFailed => HttpStatusCodes.InternalServerError,
+        CommunityQuestionAlreadyHidden => HttpStatusCodes.Conflict,
+        CommunityQuestionNotHidden => HttpStatusCodes.Conflict,
+        CommunityQuestionAlreadyClosed => HttpStatusCodes.Conflict,
+        CommunityQuestionAlreadyOpen => HttpStatusCodes.Conflict,
+        CommunityQuestionResolvedRequiresAcceptedAnswer => HttpStatusCodes.BadRequest,
+        CommunityQuestionAcceptedAnswerNotFound => HttpStatusCodes.BadRequest,
+        CommunityQuestionAcceptedAnswerHidden => HttpStatusCodes.BadRequest,
+        CommunityQuestionAnsweredRequiresAnswers => HttpStatusCodes.BadRequest,
+        CommunityQuestionReasonRequired => HttpStatusCodes.BadRequest,
+        CommunityQuestionUpdateFailed => HttpStatusCodes.InternalServerError,
+
+        // Community answer management
+        CommunityAnswerNotFound => HttpStatusCodes.NotFound,
+        CommunityAnswerCannotBeModerated => HttpStatusCodes.Conflict,
+        CommunityAnswerAlreadyHidden => HttpStatusCodes.Conflict,
+        CommunityAnswerNotHidden => HttpStatusCodes.Conflict,
+        CommunityAnswerAlreadyDeleted => HttpStatusCodes.Conflict,
+        CommunityAnswerNotDeleted => HttpStatusCodes.Conflict,
+        CommunityAnswerHideFailed => HttpStatusCodes.InternalServerError,
+        CommunityAnswerShowFailed => HttpStatusCodes.InternalServerError,
+        CommunityAnswerDeleteFailed => HttpStatusCodes.InternalServerError,
+        CommunityAnswerRestoreFailed => HttpStatusCodes.InternalServerError,
+        CommunityAnswerQuestionNotFound => HttpStatusCodes.NotFound,
+        CommunityAnswerAuthorNotFound => HttpStatusCodes.NotFound,
+        CommunityAnswerCreateFailed => HttpStatusCodes.InternalServerError,
+        CommunityAnswerUpdateFailed => HttpStatusCodes.InternalServerError,
+        CommunityAnswerContentRequired => HttpStatusCodes.BadRequest,
 
         _ => HttpStatusCodes.InternalServerError
     };

@@ -85,6 +85,14 @@ public static class DependencyInjection
         services.AddScoped<ILevelRepository, LevelRepository>();
         services.AddScoped<ILevelService, LevelService>();
 
+        // Community question management services
+        services.AddScoped<ICommunityQuestionRepository, CommunityQuestionRepository>();
+        services.AddScoped<ICommunityQuestionService, CommunityQuestionService>();
+
+        // Community answer management services
+        services.AddScoped<ICommunityAnswerRepository, CommunityAnswerRepository>();
+        services.AddScoped<ICommunityAnswerService, CommunityAnswerService>();
+
         return services;
     }
 }

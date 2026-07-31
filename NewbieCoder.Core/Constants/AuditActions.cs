@@ -59,4 +59,24 @@ public static class AuditActions
     public const string LevelUpdated = "LEVEL_UPDATED";
     public const string LevelDeleted = "LEVEL_DELETED";
     public const string LevelRestored = "LEVEL_RESTORED";
+
+    // Community question management
+    public const string CommunityQuestionLocked = "COMMUNITY_QUESTION_LOCKED";
+    public const string CommunityQuestionUnlocked = "COMMUNITY_QUESTION_UNLOCKED";
+    public const string CommunityQuestionDeleted = "COMMUNITY_QUESTION_DELETED";
+    public const string CommunityQuestionRestored = "COMMUNITY_QUESTION_RESTORED";
+    public const string CommunityQuestionCreated = "COMMUNITY_QUESTION_CREATED";
+    public const string CommunityQuestionUpdated = "COMMUNITY_QUESTION_UPDATED";
+    public const string CommunityQuestionStatusChanged = "COMMUNITY_QUESTION_STATUS_CHANGED";
+    public const string CommunityQuestionHidden = "COMMUNITY_QUESTION_HIDDEN";
+    public const string CommunityQuestionClosed = "COMMUNITY_QUESTION_CLOSED";
+    public const string CommunityQuestionReopened = "COMMUNITY_QUESTION_REOPENED";
+
+    // Community answer management
+    public const string CommunityAnswerHidden = "COMMUNITY_ANSWER_HIDDEN";
+    public const string CommunityAnswerShown = "COMMUNITY_ANSWER_SHOWN";
+    public const string CommunityAnswerDeleted = "COMMUNITY_ANSWER_DELETED";
+    public const string CommunityAnswerRestored = "COMMUNITY_ANSWER_RESTORED";
+    public const string CommunityAnswerCreated = "COMMUNITY_ANSWER_CREATED";
+    public const string CommunityAnswerUpdated = "COMMUNITY_ANSWER_UPDATED";
 }

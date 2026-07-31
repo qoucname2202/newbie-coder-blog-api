@@ -750,6 +750,7 @@ public class CommunityAnswerConfig : IEntityTypeConfiguration<CommunityAnswer>
         b.Property(x => x.Content).HasColumnName("content").HasColumnType("text").IsRequired();
         b.Property(x => x.VoteScore).HasColumnName("vote_score").HasDefaultValue(0);
         b.Property(x => x.IsAccepted).HasColumnName("is_accepted").HasDefaultValue(false);
+        b.Property(x => x.IsHidden).HasColumnName("is_hidden").HasDefaultValue(false);
 
         b.HasIndex(x => x.QuestionId);
         b.HasIndex(x => x.AuthorId);
