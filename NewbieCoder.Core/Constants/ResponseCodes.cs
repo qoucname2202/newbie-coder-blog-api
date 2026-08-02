@@ -169,6 +169,19 @@ public static class ResponseCodes
     public const string TagHasNoAssociations = "00020913";
     public const string TagMergeFailed = "00020914";
 
+    // Image upload
+    public const string ImageFileEmpty = "00021001";
+    public const string ImageFileTooLarge = "00021002";
+    public const string ImageTooManyFiles = "00021003";
+    public const string ImageInvalidExtension = "00021004";
+    public const string ImageInvalidMimeType = "00021005";
+    public const string ImageInvalidFormat = "00021006";
+    public const string ImageInvalidDimensions = "00021007";
+    public const string ImageUnreadable = "00021008";
+    public const string ImagePublicIdRequired = "00021009";
+    public const string ImageUploadFailed = "00021010";
+    public const string ImageDeleteFailed = "00021011";
+
     /// <summary>
     /// Maps HTTP status to the default business response code when none is specified.
     /// </summary>
@@ -343,6 +356,19 @@ public static class ResponseCodes
         TagSourceNotFound => HttpStatusCodes.NotFound,
         TagTargetNotFound => HttpStatusCodes.NotFound,
         TagHasNoAssociations => HttpStatusCodes.Conflict,
+
+        // Image upload
+        ImageFileEmpty => HttpStatusCodes.BadRequest,
+        ImageFileTooLarge => HttpStatusCodes.BadRequest,
+        ImageTooManyFiles => HttpStatusCodes.BadRequest,
+        ImageInvalidExtension => HttpStatusCodes.BadRequest,
+        ImageInvalidMimeType => HttpStatusCodes.BadRequest,
+        ImageInvalidFormat => HttpStatusCodes.BadRequest,
+        ImageInvalidDimensions => HttpStatusCodes.BadRequest,
+        ImageUnreadable => HttpStatusCodes.BadRequest,
+        ImagePublicIdRequired => HttpStatusCodes.BadRequest,
+        ImageUploadFailed => HttpStatusCodes.InternalServerError,
+        ImageDeleteFailed => HttpStatusCodes.InternalServerError,
 
         _ => HttpStatusCodes.InternalServerError
     };

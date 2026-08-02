@@ -186,4 +186,22 @@ public static class ResponseMessages
     public const string UpdateProfileSuccess = "Personal information updated successfully.";
     public const string UpdateValidationFailed = "Invalid update data.";
     public const string SessionInvalid = "Invalid session.";
+
+    // Image upload
+    public const string ImageUploadSuccess = "Image uploaded successfully.";
+    public const string ImageDeleteSuccess = "Image deleted successfully.";
+    public const string ImageFileEmpty = "No image file provided or the file is empty.";
+    public const string ImageFileTooLarge = "Image file size exceeds the maximum allowed size of {0}.";
+    public const string ImageTooManyFiles = "Too many files. Maximum allowed is {0} files.";
+    public const string ImageInvalidExtension = "Invalid file extension. Allowed extensions: {0}.";
+    public const string ImageInvalidMimeType = "Invalid MIME type. Allowed types: {0}.";
+    public const string ImageInvalidFormat = "Invalid image format or the file is corrupted.";
+    public const string ImageInvalidDimensions = "Invalid image dimensions.";
+    public const string ImageUnreadable = "Unable to read the image file.";
+    public const string ImageWidthExceeded = "Image width ({1}) exceeds the maximum allowed width of {0} pixels.";
+    public const string ImageHeightExceeded = "Image height ({1}) exceeds the maximum allowed height of {0} pixels.";
+    public const string ImagePublicIdRequired = "Image public ID is required.";
+    public const string ImageUploadFailed = "Failed to upload image. Please try again.";
+    public const string ImageDeleteFailed = "Failed to delete image. Please try again.";
+    public const string CloudinaryNotConfigured = "Image upload service is not properly configured. Please contact support.";
 }
