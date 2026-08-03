@@ -204,4 +204,69 @@ public static class ResponseMessages
     public const string ImageUploadFailed = "Failed to upload image. Please try again.";
     public const string ImageDeleteFailed = "Failed to delete image. Please try again.";
     public const string CloudinaryNotConfigured = "Image upload service is not properly configured. Please contact support.";
+    // Level management
+    public const string LevelCreatedSuccess = "Level created successfully.";
+    public const string LevelUpdatedSuccess = "Level updated successfully.";
+    public const string LevelDeletedSuccess = "Level deleted successfully.";
+    public const string LevelRestoredSuccess = "Level restored successfully.";
+    public const string LevelRetrievedSuccess = "Level retrieved successfully.";
+    public const string LevelNotFound = "Level not found.";
+    public const string LevelCodeRequired = "Level code is required.";
+    public const string LevelNameRequired = "Level name is required.";
+    public const string LevelCodeAlreadyExists = "A level with this code already exists.";
+    public const string LevelNameAlreadyExists = "A level with this name already exists.";
+    public const string LevelHasInterviewQuestions = "Cannot delete level that has associated interview questions.";
+
+    // Community question management
+    public const string CommunityQuestionRetrievedSuccess = "Community question retrieved successfully.";
+    public const string CommunityQuestionDeletedSuccess = "Community question deleted successfully.";
+    public const string CommunityQuestionRestoredSuccess = "Community question restored successfully.";
+    public const string CommunityQuestionLockedSuccess = "Community question locked successfully.";
+    public const string CommunityQuestionUnlockedSuccess = "Community question unlocked successfully.";
+    public const string CommunityQuestionNotFound = "Community question not found.";
+    public const string CommunityQuestionAlreadyDeleted = "Community question is already deleted.";
+    public const string CommunityQuestionNotDeleted = "Community question is not deleted.";
+    public const string CommunityQuestionAlreadyLocked = "Community question is already locked.";
+    public const string CommunityQuestionNotLocked = "Community question is not locked.";
+    public const string CommunityQuestionCannotBeModerated = "Cannot moderate a deleted community question.";
+    public const string CommunityQuestionCreatedSuccess = "Community question created successfully.";
+    public const string CommunityQuestionUpdatedSuccess = "Community question updated successfully.";
+    public const string CommunityQuestionAuthorNotFound = "The specified author does not exist.";
+    public const string CommunityQuestionTitleRequired = "Question title is required.";
+    public const string CommunityQuestionContentRequired = "Question content is required.";
+    public const string CommunityQuestionTitleTooShort = "Question title must be at least 10 characters.";
+    public const string CommunityQuestionTitleTooLong = "Question title must not exceed 300 characters.";
+    public const string CommunityQuestionContentTooShort = "Question content must be at least 20 characters.";
+    public const string CommunityQuestionContentTooLong = "Question content must not exceed 10,000 characters.";
+    public const string CommunityQuestionInvalidStatus = "Invalid community question status.";
+    public const string CommunityQuestionInvalidStatusTransition = "The community question status transition is invalid.";
+    public const string CommunityQuestionAlreadyInTargetStatus = "Community question is already in the target status.";
+    public const string CommunityQuestionStatusUpdateFailed = "Failed to update community question status.";
+    public const string CommunityQuestionAlreadyHidden = "Community question is already hidden.";
+    public const string CommunityQuestionNotHidden = "Community question is not hidden.";
+    public const string CommunityQuestionAlreadyClosed = "Community question is already closed.";
+    public const string CommunityQuestionAlreadyOpen = "Community question is already open.";
+    public const string CommunityQuestionResolvedRequiresAcceptedAnswer = "Cannot mark question as Resolved without an accepted answer.";
+    public const string CommunityQuestionAcceptedAnswerNotFound = "Accepted answer does not exist or does not belong to this question.";
+    public const string CommunityQuestionAcceptedAnswerHidden = "Accepted answer is hidden. Unhide it before marking as Resolved.";
+    public const string CommunityQuestionAnsweredRequiresAnswers = "Cannot mark question as Answered without at least one valid answer.";
+    public const string CommunityQuestionReasonRequired = "Reason is required for this operation.";
+    public const string CommunityQuestionUpdateFailed = "Failed to update community question.";
+
+    // Community answer management
+    public const string CommunityAnswerHiddenSuccess = "Community answer hidden successfully.";
+    public const string CommunityAnswerShownSuccess = "Community answer shown successfully.";
+    public const string CommunityAnswerDeletedSuccess = "Community answer deleted successfully.";
+    public const string CommunityAnswerRestoredSuccess = "Community answer restored successfully.";
+    public const string CommunityAnswerCreatedSuccess = "Community answer created successfully.";
+    public const string CommunityAnswerUpdatedSuccess = "Community answer updated successfully.";
+    public const string CommunityAnswerNotFound = "Community answer not found.";
+    public const string CommunityAnswerAlreadyHidden = "Community answer is already hidden.";
+    public const string CommunityAnswerNotHidden = "Community answer is not hidden.";
+    public const string CommunityAnswerAlreadyDeleted = "Community answer is already deleted.";
+    public const string CommunityAnswerNotDeleted = "Community answer is not deleted.";
+    public const string CommunityAnswerCannotBeModerated = "Cannot moderate a deleted community answer.";
+    public const string CommunityAnswerQuestionNotFound = "The specified question does not exist.";
+    public const string CommunityAnswerAuthorNotFound = "The specified author does not exist.";
+    public const string CommunityAnswerContentRequired = "Answer content is required.";
 }
