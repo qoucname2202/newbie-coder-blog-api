@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NewbieCoder.Core.Interfaces.Repositories;
 using NewbieCoder.Core.Interfaces.Services;
+using NewbieCoder.Core.Options;
 using NewbieCoder.Infrastructure.CQRS.Posts;
 using NewbieCoder.Infrastructure.Data;
 using NewbieCoder.Infrastructure.Repositories;
@@ -14,6 +15,39 @@ namespace NewbieCoder.Infrastructure;
 
 public static class DependencyInjection
 {
+    private static bool _envLoaded;
+
+    static DependencyInjection()
+    {
+        LoadEnvironmentVariables();
+    }
+
+    private static void LoadEnvironmentVariables()
+    {
+        if (_envLoaded) return;
+
+        var envPaths = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, ".env"),
+            Path.Combine(AppContext.BaseDirectory, "..", ".env"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", ".env"),
+            Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+            Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"),
+        };
+
+        foreach (var envPath in envPaths)
+        {
+            var normalizedPath = Path.GetFullPath(envPath);
+            if (File.Exists(normalizedPath))
+            {
+                DotNetEnv.Env.Load(normalizedPath);
+                break;
+            }
+        }
+
+        _envLoaded = true;
+    }
+
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -53,9 +87,6 @@ public static class DependencyInjection
         services.AddScoped<IPasswordResetService, PasswordResetService>();
         // User management services
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IUserProfileService, UserProfileService>();
-        // User management services
-        services.AddScoped<IUserService, UserService>();
         // File upload service
   
         services.AddScoped<IFileUploadService, FileUploadService>();
@@ -81,6 +112,24 @@ public static class DependencyInjection
         services.AddScoped<ITagRepository, TagRepository>();
         services.AddScoped<ITagService, TagService>();
 
+        // Image storage services - read Cloudinary credentials from environment variables
+        // Supports both CLOUDINARY_* format and Cloudinary__* format from .env
+        services.Configure<CloudinaryOptions>(options =>
+        {
+            options.CloudName = Environment.GetEnvironmentVariable("CLOUDINARY_NAME")
+                             ?? Environment.GetEnvironmentVariable("Cloudinary__CloudName")
+                             ?? string.Empty;
+            options.ApiKey = Environment.GetEnvironmentVariable("CLOUDINARY_KEY")
+                           ?? Environment.GetEnvironmentVariable("Cloudinary__ApiKey")
+                           ?? string.Empty;
+            options.ApiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_SECRET")
+                              ?? Environment.GetEnvironmentVariable("Cloudinary__ApiSecret")
+                              ?? string.Empty;
+        });
+
+        services.Configure<ImageUploadOptions>(configuration.GetSection(ImageUploadOptions.SectionName)!);
+
+        services.AddScoped<IImageStorageService, ImageStorageService>();
         // Level management services
         services.AddScoped<ILevelRepository, LevelRepository>();
         services.AddScoped<ILevelService, LevelService>();

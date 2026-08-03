@@ -169,16 +169,28 @@ public static class ResponseCodes
     public const string TagHasNoAssociations = "00020913";
     public const string TagMergeFailed = "00020914";
 
+    // Image upload
+    public const string ImageFileEmpty = "00021001";
+    public const string ImageFileTooLarge = "00021002";
+    public const string ImageTooManyFiles = "00021003";
+    public const string ImageInvalidExtension = "00021004";
+    public const string ImageInvalidMimeType = "00021005";
+    public const string ImageInvalidFormat = "00021006";
+    public const string ImageInvalidDimensions = "00021007";
+    public const string ImageUnreadable = "00021008";
+    public const string ImagePublicIdRequired = "00021009";
+    public const string ImageUploadFailed = "00021010";
+    public const string ImageDeleteFailed = "00021011";
     // Level management
-    public const string LevelNotFound = "00021001";
-    public const string LevelCodeRequired = "00021002";
-    public const string LevelNameRequired = "00021003";
-    public const string LevelCodeAlreadyExists = "00021004";
-    public const string LevelNameAlreadyExists = "00021005";
-    public const string LevelHasInterviewQuestions = "00021006";
-    public const string LevelCreateFailed = "00021007";
-    public const string LevelUpdateFailed = "00021008";
-    public const string LevelDeleteFailed = "00021009";
+    public const string LevelNotFound = "00021301";
+    public const string LevelCodeRequired = "00021302";
+    public const string LevelNameRequired = "00021303";
+    public const string LevelCodeAlreadyExists = "00021304";
+    public const string LevelNameAlreadyExists = "00021305";
+    public const string LevelHasInterviewQuestions = "00021306";
+    public const string LevelCreateFailed = "00021307";
+    public const string LevelUpdateFailed = "00021308";
+    public const string LevelDeleteFailed = "00021309";
 
     // Community question management
     public const string CommunityQuestionNotFound = "00021101";
@@ -408,6 +420,18 @@ public static class ResponseCodes
         TagTargetNotFound => HttpStatusCodes.NotFound,
         TagHasNoAssociations => HttpStatusCodes.Conflict,
 
+        // Image upload
+        ImageFileEmpty => HttpStatusCodes.BadRequest,
+        ImageFileTooLarge => HttpStatusCodes.BadRequest,
+        ImageTooManyFiles => HttpStatusCodes.BadRequest,
+        ImageInvalidExtension => HttpStatusCodes.BadRequest,
+        ImageInvalidMimeType => HttpStatusCodes.BadRequest,
+        ImageInvalidFormat => HttpStatusCodes.BadRequest,
+        ImageInvalidDimensions => HttpStatusCodes.BadRequest,
+        ImageUnreadable => HttpStatusCodes.BadRequest,
+        ImagePublicIdRequired => HttpStatusCodes.BadRequest,
+        ImageUploadFailed => HttpStatusCodes.InternalServerError,
+        ImageDeleteFailed => HttpStatusCodes.InternalServerError,
         // Level management
         LevelNotFound => HttpStatusCodes.NotFound,
         LevelCodeRequired => HttpStatusCodes.BadRequest,

@@ -282,7 +282,6 @@ public sealed partial class AuthService : IAuthService
     #region Logout
 
     /// <inheritdoc />
-    /// <inheritdoc />
     public async Task LogoutAsync(
         long userId,
         long sessionId,
@@ -345,10 +344,11 @@ public sealed partial class AuthService : IAuthService
 
             if (deviceId.HasValue)
             {
-                _db.UserDevices
+                await _db.UserDevices
                     .Where(d => d.Id == deviceId)
-                    .ExecuteUpdate(s => s
-                        .SetProperty(d => d.LastLoginAt, now));
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(d => d.LastLoginAt, now),
+                        cancellationToken);
             }
 
             await _db.SaveChangesAsync(cancellationToken);
