@@ -87,9 +87,6 @@ public static class DependencyInjection
         services.AddScoped<IPasswordResetService, PasswordResetService>();
         // User management services
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IUserProfileService, UserProfileService>();
-        // User management services
-        services.AddScoped<IUserService, UserService>();
         // File upload service
   
         services.AddScoped<IFileUploadService, FileUploadService>();

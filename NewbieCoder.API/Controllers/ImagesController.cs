@@ -13,7 +13,7 @@ namespace NewbieCoder.API.Controllers;
 /// Handles image upload and deletion operations using Cloudinary.
 /// </summary>
 [ApiController]
-[Route("api/images")]
+[Route("api/v1/images")]
 [Produces("application/json")]
 [Tags("Images")]
 public sealed class ImagesController : ControllerBase

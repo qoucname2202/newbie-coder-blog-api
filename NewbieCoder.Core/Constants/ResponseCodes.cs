@@ -182,15 +182,15 @@ public static class ResponseCodes
     public const string ImageUploadFailed = "00021010";
     public const string ImageDeleteFailed = "00021011";
     // Level management
-    public const string LevelNotFound = "00021001";
-    public const string LevelCodeRequired = "00021002";
-    public const string LevelNameRequired = "00021003";
-    public const string LevelCodeAlreadyExists = "00021004";
-    public const string LevelNameAlreadyExists = "00021005";
-    public const string LevelHasInterviewQuestions = "00021006";
-    public const string LevelCreateFailed = "00021007";
-    public const string LevelUpdateFailed = "00021008";
-    public const string LevelDeleteFailed = "00021009";
+    public const string LevelNotFound = "00021301";
+    public const string LevelCodeRequired = "00021302";
+    public const string LevelNameRequired = "00021303";
+    public const string LevelCodeAlreadyExists = "00021304";
+    public const string LevelNameAlreadyExists = "00021305";
+    public const string LevelHasInterviewQuestions = "00021306";
+    public const string LevelCreateFailed = "00021307";
+    public const string LevelUpdateFailed = "00021308";
+    public const string LevelDeleteFailed = "00021309";
 
     // Community question management
     public const string CommunityQuestionNotFound = "00021101";
