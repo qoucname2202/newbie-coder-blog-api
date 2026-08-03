@@ -4,10 +4,9 @@ using NewbieCoder.Infrastructure.Data;
 using NewbieCoder.Infrastructure.Data.SeedData;
 using DotNetEnv;
 
-// Load .env BEFORE CreateBuilder so IConfiguration can pick up env vars.
-var envPath = Path.Combine(AppContext.BaseDirectory, ".env");
-DotNetEnv.Env.Load(envPath);
 // Try multiple locations: output dir, project dir, and current directory.
+// ── Load .env BEFORE building the host so all services & middleware
+//    see the environment variables from the start. ──────────────────────────
 var possibleEnvPaths = new[]
 {
     Path.Combine(AppContext.BaseDirectory, ".env"),
@@ -24,9 +23,25 @@ string? loadedEnvPath = null;
 foreach (var candidatePath in possibleEnvPaths)
 {
     var normalizedPath = Path.GetFullPath(candidatePath);
-    if (File.Exists(normalizedPath))
-    {
-        DotNetEnv.Env.Load(normalizedPath);
+        if (File.Exists(normalizedPath))
+        {
+            DotNetEnv.Env.Load(normalizedPath);
+
+        // Push all KEY=VALUE lines into the process environment so both
+        // IConfiguration (Reload()ed later) and Environment.GetEnvironmentVariable
+        // can read them regardless of when they are called.
+        foreach (var line in File.ReadAllLines(normalizedPath))
+        {
+            var trimmed = line.Trim();
+            if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith('#'))
+                continue;
+            var eq = trimmed.IndexOf('=');
+            if (eq < 0) continue;
+            var key = trimmed[..eq].Trim();
+            var val = trimmed[(eq + 1)..].Trim();
+            Environment.SetEnvironmentVariable(key, val);
+        }
+
         loadedEnvPath = normalizedPath;
         Console.WriteLine($"Loaded .env from: {normalizedPath}");
         break;
@@ -38,6 +53,7 @@ if (loadedEnvPath == null)
     Console.WriteLine("Warning: .env file not found in any of the expected locations.");
 }
 
+// ── Build the host AFTER .env is loaded ──────────────────────────────────────
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApiServices(builder.Configuration);
@@ -152,4 +168,6 @@ app.UseApiPipeline();
 app.Run();
 
 // Expose for integration tests
-public partial class Program;
+public partial class Program
+{
+}

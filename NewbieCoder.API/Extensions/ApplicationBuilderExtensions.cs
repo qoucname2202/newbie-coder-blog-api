@@ -29,6 +29,9 @@ public static class ApplicationBuilderExtensions
         // Role enforcement via [RequiresRole] attribute.
         app.UseApiAuthorization();
 
+        // Protect /swagger endpoints with HTTP Basic Auth (credentials from env vars).
+        app.UseMiddleware<SwaggerBasicAuthMiddleware>();
+
         // Enable Swagger in all environments for easier testing.
         app.UseSwagger();
         app.UseSwaggerUI(options =>

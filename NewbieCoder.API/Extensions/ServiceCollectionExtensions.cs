@@ -3,10 +3,12 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NewbieCoder.API.Authorization;
 using NewbieCoder.API.Middlewares;
+using NewbieCoder.API.Options;
 using NewbieCoder.API.Validators;
 using NewbieCoder.Core.Constants;
 using NewbieCoder.Infrastructure;
@@ -22,6 +24,9 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpContextAccessor();
         services.AddApiRateLimiting(configuration);
+
+        // Swagger Basic Auth — credentials read from .env file before the DI container is built.
+        services.ConfigureOptions<SwaggerAuthOptionsValidator>();
 
         // JWT settings — read from environment variables (loaded from .env via DotNetEnv).
         var jwtSettings = new JwtSettings
@@ -153,6 +158,31 @@ public static class ServiceCollectionExtensions
                         {
                             Type = ReferenceType.SecurityScheme,
                             Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
+
+            // --- HTTP Basic for Swagger ---
+            options.AddSecurityDefinition("Basic", new OpenApiSecurityScheme
+            {
+                Description = "HTTP Basic Authentication for Swagger UI. Enter username and password.",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = "basic"
+            });
+
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Basic"
                         }
                     },
                     Array.Empty<string>()
