@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,11 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     private static readonly object _seedLock = new();
     private const string SharedInMemoryDbName = "TestBlogApiDb";
 
+    /// <summary>
+    /// Holds the built host so CreateServer can retrieve the IWebHost from its service container.
+    /// </summary>
+    private IHost? _builtHost;
+
     static TestWebApplicationFactory()
     {
         var uploadsDir = Path.Combine(AppContext.BaseDirectory, "uploads");
@@ -45,60 +51,84 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
-        var host = base.CreateHost(builder);
+        // Build the host ourselves and start it *after* seeding so that middleware does not
+        // fire on an empty in-memory database.  (base.CreateHost calls host.Start() before
+        // returning, which is why the original code seeded too late.)
+        _builtHost = builder.Build();
 
-        // Seed exactly once per test process (static lock prevents concurrent re-entry from
-        // parallel xUnit test runners). Without this, AuthMiddleware.IsAccountLockedAsync queries
-        // an empty in-memory DB and treats the token bearer as locked (returning 403 Forbidden).
         lock (_seedLock)
         {
-            if (_seeded) return host;
-            _seeded = true;
-
-            using var scope = host.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            if (!db.Users.Any())
+            if (!_seeded)
             {
-                db.Users.Add(new User
-                {
-                    Id = 1,
-                    Email = "test@example.com",
-                    Username = "testuser",
-                    FullName = "Test User",
-                    Password = "dummy-hash",
-                    Location = "Test City",
-                    Status = UserStatus.Active,
-                    EmailVerified = true,
-                    EffDate = DateTimeOffset.UtcNow,
-                    DateLastMaint = DateTimeOffset.UtcNow
-                });
+                _seeded = true;
 
-                db.Roles.Add(new Role
+                using var scope = _builtHost.Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                if (!db.Users.Any())
                 {
-                    Id = 1,
-                    Code = "USER",
-                    Name = "User",
-                    IsSystem = true,
-                    Status = RoleStatus.Active,
-                    EffDate = DateTimeOffset.UtcNow,
-                    DateLastMaint = DateTimeOffset.UtcNow
-                });
+                    db.Users.Add(new User
+                    {
+                        Id = 1,
+                        Email = "test@example.com",
+                        Username = "testuser",
+                        FullName = "Test User",
+                        Password = "dummy-hash",
+                        Location = "Test City",
+                        Status = UserStatus.Active,
+                        EmailVerified = true,
+                        EffDate = DateTimeOffset.UtcNow,
+                        DateLastMaint = DateTimeOffset.UtcNow
+                    });
 
-                db.UserRoles.Add(new UserRole
-                {
-                    UserId = 1,
-                    RoleId = 1,
-                    Status = UserRoleStatus.Active,
-                    AssignedAt = DateTimeOffset.UtcNow,
-                    EffDate = DateTimeOffset.UtcNow,
-                    DateLastMaint = DateTimeOffset.UtcNow
-                });
+                    db.Roles.Add(new Role
+                    {
+                        Id = 1,
+                        Code = "USER",
+                        Name = "User",
+                        IsSystem = true,
+                        Status = RoleStatus.Active,
+                        EffDate = DateTimeOffset.UtcNow,
+                        DateLastMaint = DateTimeOffset.UtcNow
+                    });
 
-                db.SaveChanges();
+                    db.UserRoles.Add(new UserRole
+                    {
+                        UserId = 1,
+                        RoleId = 1,
+                        Status = UserRoleStatus.Active,
+                        AssignedAt = DateTimeOffset.UtcNow,
+                        EffDate = DateTimeOffset.UtcNow,
+                        DateLastMaint = DateTimeOffset.UtcNow
+                    });
+
+                    db.SaveChanges();
+                }
             }
         }
 
-        return host;
+        _builtHost.Start();
+        return _builtHost;
+    }
+
+    protected override TestServer CreateServer(IWebHostBuilder builder)
+    {
+        // _builtHost is already built and started by CreateHost above.
+        // Retrieve the IWebHost from its service container so TestServer can handle requests.
+        var webHost = _builtHost!.Services.GetRequiredService<IWebHost>();
+
+        // WebApplicationFactory sets _serverBaseAddress before calling CreateServer.
+        var baseAddress = _serverBaseAddress;
+
+        var server = new TestServer(builder)
+        {
+            BaseAddress = baseAddress
+        };
+
+        // Replace TestServer's internal host with our already-started one so that all HTTP
+        // requests go through the same pipeline that was seeded above.
+        typeof(TestServer).GetProperty(nameof(TestServer.Host))!.SetValue(server, webHost);
+
+        return server;
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -121,7 +151,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         builder.ConfigureServices(services =>
         {
             // Replace AppDbContext with in-memory database using the instance name so all scoped
-            // resolutions share the same database (required for CreateServer seed to be visible).
+            // resolutions share the same database (required for seed to be visible).
             var dbContextDescriptors = services.Where(sd =>
                 sd.ServiceType == typeof(AppDbContext) ||
                 (sd.ServiceType.IsGenericType && sd.ServiceType.GetGenericTypeDefinition() == typeof(DbContextOptions<>))
