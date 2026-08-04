@@ -72,7 +72,16 @@ public sealed class SwaggerBasicAuthMiddleware
     {
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
         context.Response.Headers["WWW-Authenticate"] = "Basic realm=\"Swagger\"";
-        context.Response.ContentType = "text/plain";
-        await context.Response.WriteAsync("Unauthorized");
+        context.Response.ContentType = "text/html";
+        await context.Response.WriteAsync(@"
+<!doctype html>
+<html>
+<head><title>401 Unauthorized</title></head>
+<body style='font-family:sans-serif;padding:40px;text-align:center'>
+  <h2>&#128274; Swagger — Authentication Required</h2>
+  <p>Please enter your credentials to access the API documentation.</p>
+  <p><em>This dialog may not appear in all browsers — use the Authorize button in the top-right corner instead.</em></p>
+</body>
+</html>");
     }
 }

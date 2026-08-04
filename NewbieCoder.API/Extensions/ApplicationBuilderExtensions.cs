@@ -29,10 +29,15 @@ public static class ApplicationBuilderExtensions
         // Role enforcement via [RequiresRole] attribute.
         app.UseApiAuthorization();
 
-        // Protect /swagger endpoints with HTTP Basic Auth (credentials from env vars).
-        app.UseMiddleware<SwaggerBasicAuthMiddleware>();
+        // Protect ALL /swagger/* endpoints with HTTP Basic Auth — runs BEFORE UseSwagger()
+        // so that unauthenticated requests are rejected at the gate, not after serving HTML.
+        app.UseWhen(
+            predicate: context => (context.Request.Path.Value ?? string.Empty)
+                                      .StartsWith("/swagger", StringComparison.OrdinalIgnoreCase),
+            configuration: appBuilder => appBuilder.UseMiddleware<SwaggerBasicAuthMiddleware>()
+        );
 
-        // Enable Swagger in all environments for easier testing.
+        app.UseHttpsRedirection();
         app.UseSwagger();
         app.UseSwaggerUI(options =>
         {
@@ -48,8 +53,6 @@ public static class ApplicationBuilderExtensions
             options.ShowCommonExtensions();
             options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
         });
-
-        app.UseHttpsRedirection();
         app.MapControllers()
             .RequireRateLimiting(RateLimitingExtensions.DefaultPolicyName);
 
