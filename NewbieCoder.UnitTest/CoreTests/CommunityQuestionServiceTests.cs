@@ -1248,7 +1248,7 @@ public class CommunityQuestionServiceTests : IDisposable
         var result = await _sut.HideQuestionAsync(command);
 
         Assert.Equal("Hidden", result.Status);
-        Assert.NotNull(result.HiddenAt);
+        Assert.NotEqual(default, result.HiddenAt);
         Assert.Equal(99, result.HiddenBy);
     }
 
@@ -1357,7 +1357,7 @@ public class CommunityQuestionServiceTests : IDisposable
         var result = await _sut.CloseQuestionAsync(command);
 
         Assert.Equal("Closed", result.Status);
-        Assert.NotNull(result.ClosedAt);
+        Assert.NotEqual(default, result.ClosedAt);
         Assert.Equal(99, result.ClosedBy);
     }
 

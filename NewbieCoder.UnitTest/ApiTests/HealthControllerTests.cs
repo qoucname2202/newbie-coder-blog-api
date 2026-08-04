@@ -116,13 +116,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         // Retrieve the IWebHost from its service container so TestServer can handle requests.
         var webHost = _builtHost!.Services.GetRequiredService<IWebHost>();
 
-        // WebApplicationFactory sets _serverBaseAddress before calling CreateServer.
-        var baseAddress = _serverBaseAddress;
-
-        var server = new TestServer(builder)
-        {
-            BaseAddress = baseAddress
-        };
+        var server = new TestServer(builder);
 
         // Replace TestServer's internal host with our already-started one so that all HTTP
         // requests go through the same pipeline that was seeded above.

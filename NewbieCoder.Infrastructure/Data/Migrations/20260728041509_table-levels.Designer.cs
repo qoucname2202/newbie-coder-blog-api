@@ -13,7 +13,7 @@ namespace NewbieCoder.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20260728041509_table-levels")]
-    partial class tablelevels
+    partial class TableLevels
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
