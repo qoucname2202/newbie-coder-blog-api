@@ -33,7 +33,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     private const string SharedInMemoryDbName = "TestBlogApiDb";
 
     /// <summary>
-    /// Holds the built host so CreateServer can retrieve the IWebHost from its service container.
+    /// Holds the built host so ConfigureWebHost can access it to inject test doubles
+    /// into its scoped service providers before the host is started.
     /// </summary>
     private IHost? _builtHost;
 
@@ -49,11 +50,56 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
     public TestRateLimitService RateLimitService => _rateLimit;
 
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Test");
+
+        builder.UseSetting("JwtSettings__Secret", "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!");
+        builder.UseSetting("JwtSettings__Issuer", "NewbieCoderAPI");
+        builder.UseSetting("JwtSettings__Audience", "NewbieCoderClient");
+
+        builder.ConfigureAppConfiguration(config =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SeedData:Enabled"] = "false",
+                ["ConnectionStrings:DefaultConnection"] = "InMemoryConnection"
+            }!);
+        });
+
+        builder.ConfigureServices(services =>
+        {
+            // Replace AppDbContext with in-memory database using the instance name so all scoped
+            // resolutions share the same database (required for seed to be visible).
+            var dbContextDescriptors = services.Where(sd =>
+                sd.ServiceType == typeof(AppDbContext) ||
+                (sd.ServiceType.IsGenericType && sd.ServiceType.GetGenericTypeDefinition() == typeof(DbContextOptions<>))
+            ).ToList();
+            foreach (var d in dbContextDescriptors) services.Remove(d);
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseInMemoryDatabase(SharedInMemoryDbName));
+
+            // Remove real IAuthRateLimitService.
+            var rateLimitDescriptors = services.Where(sd => sd.ServiceType == typeof(IAuthRateLimitService)).ToList();
+            foreach (var d in rateLimitDescriptors) services.Remove(d);
+            services.AddSingleton<IAuthRateLimitService>(_rateLimit);
+
+            // Override JwtMiddlewareSettings.
+            var jwtSettingsDescriptor = services.SingleOrDefault(sd => sd.ServiceType == typeof(JwtMiddlewareSettings));
+            if (jwtSettingsDescriptor != null) services.Remove(jwtSettingsDescriptor);
+            services.AddSingleton(new JwtMiddlewareSettings
+            {
+                Secret = "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!",
+                Issuer = "NewbieCoderAPI",
+                Audience = "NewbieCoderClient"
+            });
+        });
+    }
+
     protected override IHost CreateHost(IHostBuilder builder)
     {
-        // Build the host ourselves and start it *after* seeding so that middleware does not
-        // fire on an empty in-memory database.  (base.CreateHost calls host.Start() before
-        // returning, which is why the original code seeded too late.)
+        // Build the host first so ConfigureWebHost can run and inject test doubles.
+        // Then seed the database before starting, so middleware never sees an empty DB.
         _builtHost = builder.Build();
 
         lock (_seedLock)
@@ -108,67 +154,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
         _builtHost.Start();
         return _builtHost;
-    }
-
-    protected override TestServer CreateServer(IWebHostBuilder builder)
-    {
-        // _builtHost is already built and started by CreateHost above.
-        // Retrieve the IWebHost from its service container so TestServer can handle requests.
-        var webHost = _builtHost!.Services.GetRequiredService<IWebHost>();
-
-        var server = new TestServer(builder);
-
-        // Replace TestServer's internal host with our already-started one so that all HTTP
-        // requests go through the same pipeline that was seeded above.
-        typeof(TestServer).GetProperty(nameof(TestServer.Host))!.SetValue(server, webHost);
-
-        return server;
-    }
-
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.UseEnvironment("Test");
-
-        builder.UseSetting("JwtSettings__Secret", "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!");
-        builder.UseSetting("JwtSettings__Issuer", "NewbieCoderAPI");
-        builder.UseSetting("JwtSettings__Audience", "NewbieCoderClient");
-
-        builder.ConfigureAppConfiguration(config =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["SeedData:Enabled"] = "false",
-                ["ConnectionStrings:DefaultConnection"] = "InMemoryConnection"
-            }!);
-        });
-
-        builder.ConfigureServices(services =>
-        {
-            // Replace AppDbContext with in-memory database using the instance name so all scoped
-            // resolutions share the same database (required for seed to be visible).
-            var dbContextDescriptors = services.Where(sd =>
-                sd.ServiceType == typeof(AppDbContext) ||
-                (sd.ServiceType.IsGenericType && sd.ServiceType.GetGenericTypeDefinition() == typeof(DbContextOptions<>))
-            ).ToList();
-            foreach (var d in dbContextDescriptors) services.Remove(d);
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseInMemoryDatabase(SharedInMemoryDbName));
-
-            // Remove real IAuthRateLimitService.
-            var rateLimitDescriptors = services.Where(sd => sd.ServiceType == typeof(IAuthRateLimitService)).ToList();
-            foreach (var d in rateLimitDescriptors) services.Remove(d);
-            services.AddSingleton<IAuthRateLimitService>(_rateLimit);
-
-            // Override JwtMiddlewareSettings.
-            var jwtSettingsDescriptor = services.SingleOrDefault(sd => sd.ServiceType == typeof(JwtMiddlewareSettings));
-            if (jwtSettingsDescriptor != null) services.Remove(jwtSettingsDescriptor);
-            services.AddSingleton(new JwtMiddlewareSettings
-            {
-                Secret = "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!",
-                Issuer = "NewbieCoderAPI",
-                Audience = "NewbieCoderClient"
-            });
-        });
     }
 
     internal void SetRateLimitBlocked(bool blocked) => _rateLimit.SetBlocked(blocked);
