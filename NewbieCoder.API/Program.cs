@@ -121,29 +121,39 @@ async Task<bool> TrySchemaMigrate(AppDbContext db, int maxRetries = 3)
     return false;
 }
 
-var dbConnected = false;
-using (var scope = app.Services.CreateScope())
+// Skip all relational database operations in Testing environment — integration tests use
+// EF Core InMemory which does not support ExecuteSqlRawAsync / MigrateAsync.
+var isTesting = app.Environment.IsEnvironment("Testing");
+if (isTesting)
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbConnected = await TryTestConnection(db);
-}
-
-// Only run constraint fixes and schema migrations if the database is reachable.
-if (dbConnected)
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await TrySchemaMigrate(db);
-    }
+    Console.WriteLine("[INFO] Testing environment detected — skipping DB connectivity test, schema migration, and seeder.");
 }
 else
 {
-    Console.WriteLine("[WARN] Skipping DB constraint fixes and schema migrations — database is unreachable.");
+    var dbConnected = false;
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        dbConnected = await TryTestConnection(db);
+    }
+
+    // Only run constraint fixes and schema migrations if the database is reachable.
+    if (dbConnected)
+    {
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await TrySchemaMigrate(db);
+        }
+    }
+    else
+    {
+        Console.WriteLine("[WARN] Skipping DB constraint fixes and schema migrations — database is unreachable.");
+    }
 }
 
 // Run seeder after the DB is ready but before the pipeline starts.
-if (seedEnabled)
+if (seedEnabled && !isTesting)
 {
     try
     {

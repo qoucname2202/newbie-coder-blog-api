@@ -25,8 +25,16 @@ public static class ServiceCollectionExtensions
         services.AddHttpContextAccessor();
         services.AddApiRateLimiting(configuration);
 
-        // Swagger Basic Auth — credentials read from .env file before the DI container is built.
-        services.ConfigureOptions<SwaggerAuthOptionsValidator>();
+        // Swagger Basic Auth — only register the validator in non-Testing environments.
+        // In Testing environment the .env file is absent; Swagger Basic Auth middleware
+        // is also skipped in the pipeline, so credentials are never needed.
+        if (!string.Equals(
+                Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"),
+                "Testing",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            services.ConfigureOptions<SwaggerAuthOptionsValidator>();
+        }
 
         // JWT settings — read from environment variables (loaded from .env via DotNetEnv).
         var jwtSettings = new JwtSettings

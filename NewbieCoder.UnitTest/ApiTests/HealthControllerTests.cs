@@ -52,11 +52,24 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Test");
+        // Set environment BEFORE the host builder is created so that AddApiServices (called
+        // inside WebApplication.CreateBuilder) sees the correct environment when the Swagger
+        // auth validator and relational-DB startup logic run.
+        builder.UseEnvironment("Testing");
+
+        // Set test secrets as environment variables — read by DependencyInjection static
+        // constructor (runs before AddInfrastructure) and SwaggerAuthOptionsValidator.
+        Environment.SetEnvironmentVariable("JwtSettings__Secret", "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!");
+        Environment.SetEnvironmentVariable("JwtSettings__Issuer", "NewbieCoderAPI");
+        Environment.SetEnvironmentVariable("JwtSettings__Audience", "NewbieCoderClient");
+        Environment.SetEnvironmentVariable("SWAGGER_USERNAME", "test-user");
+        Environment.SetEnvironmentVariable("SWAGGER_PASSWORD", "test-password");
 
         builder.UseSetting("JwtSettings__Secret", "TestSecretKeyThatIsAtLeast32CharactersLongForJwt!");
         builder.UseSetting("JwtSettings__Issuer", "NewbieCoderAPI");
         builder.UseSetting("JwtSettings__Audience", "NewbieCoderClient");
+        builder.UseSetting("SWAGGER_USERNAME", "test-user");
+        builder.UseSetting("SWAGGER_PASSWORD", "test-password");
 
         builder.ConfigureAppConfiguration(config =>
         {

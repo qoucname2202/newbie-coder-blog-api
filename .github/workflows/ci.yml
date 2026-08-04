@@ -88,4 +88,8 @@ jobs:
         run: dotnet restore newbie-coder-api.sln
 
       - name: Test project
+        env:
+          ASPNETCORE_ENVIRONMENT: Testing
+          SWAGGER_USERNAME: test-user
+          SWAGGER_PASSWORD: test-password
         run: dotnet test NewbieCoder.UnitTest/NewbieCoder.UnitTest.csproj --configuration Release --no-restore --verbosity normal
