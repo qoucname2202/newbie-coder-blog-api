@@ -17,7 +17,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
-ENV ASPNETCORE_ENVIRONMENT=Production
+# ASPNETCORE_ENVIRONMENT is set by Railway via railway.toml or dashboard — do not hardcode.
+# All secrets (JWT, Swagger, Cloudinary, DB) are passed as Railway environment variables
+# and read via Environment.GetEnvironmentVariable() in Program.cs / DependencyInjection.
 
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "NewbieCoder.API.dll"]

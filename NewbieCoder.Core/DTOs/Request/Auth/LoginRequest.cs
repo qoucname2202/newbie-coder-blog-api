@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using NewbieCoder.Core.Validation;
 
 namespace NewbieCoder.Core.DTOs.Request.Auth;
 
@@ -14,8 +15,7 @@ public sealed class LoginRequest
     [JsonPropertyName("login_id")]
     public string? LoginId { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
-    [MinLength(8, ErrorMessage = "Mật khẩu phải có ít nhất 8 ký tự")]
+    [TrimmedRequired(ErrorMessage = "Vui lòng nhập mật khẩu")]
     [MaxLength(64, ErrorMessage = "Mật khẩu không được vượt quá 64 ký tự")]
     public string? Password { get; set; }
 

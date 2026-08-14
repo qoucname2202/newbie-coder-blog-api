@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NewbieCoder.API.Authorization;
+using NewbieCoder.API.Converters;
 using NewbieCoder.API.Middlewares;
 using NewbieCoder.API.Options;
 using NewbieCoder.API.Validators;
@@ -82,6 +83,7 @@ public static class ServiceCollectionExtensions
         services.AddControllers()
             .AddJsonOptions(options =>
             {
+                options.JsonSerializerOptions.Converters.Add(new StrictJsonConverterFactory());
                 options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
                 options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
             })
@@ -90,24 +92,89 @@ public static class ServiceCollectionExtensions
                 options.InvalidModelStateResponseFactory = context =>
                 {
                     var trace = context.HttpContext.GetRequestTrace();
-                    var errors = context.ModelState
+
+                    var allErrors = context.ModelState
                         .Where(e => e.Value?.Errors.Count > 0)
-                        .SelectMany(e => e.Value!.Errors.Select(err => new
-                        {
-                            Field = e.Key,
-                            Message = err.ErrorMessage
-                        }))
+                        .SelectMany(e => e.Value!.Errors.Select(err => new { Key = e.Key, Message = err.ErrorMessage }))
+                        .Where(x => !string.IsNullOrWhiteSpace(x.Message))
                         .ToList();
+
+                    var allErrorMessages = allErrors.Select(e => e.Message).ToList();
+
+                    // Count required field errors from empty body {}
+                    var requiredFieldErrors = allErrorMessages
+                        .Where(m => m.Contains("field is required", StringComparison.OrdinalIgnoreCase) ||
+                                    m.Contains("is required", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    string responseData;
+
+                    // If 3+ required field errors → empty body case, list all required fields
+                    if (requiredFieldErrors.Count >= 3)
+                    {
+                        var fieldNames = allErrors
+                            .Where(e => !string.IsNullOrWhiteSpace(e.Key) &&
+                                        !e.Key.Equals("$", StringComparison.OrdinalIgnoreCase))
+                            .Select(e => char.ToLowerInvariant(e.Key[0]) + e.Key[1..])
+                            .Distinct()
+                            .ToList();
+
+                        responseData = $"The following fields are required: {string.Join(", ", fieldNames)}.";
+                    }
+                    else
+                    {
+                        // Priority 1: Type conversion errors on specific fields (not root $).
+                        // Excludes root-level errors to avoid "request field is required" alongside type error.
+                        var typeErrorField = allErrors
+                            .FirstOrDefault(e =>
+                                e.Key != "$" &&
+                                (e.Message.Contains("could not be converted to", StringComparison.OrdinalIgnoreCase) ||
+                                 e.Message.Contains("JSON value could not be converted", StringComparison.OrdinalIgnoreCase)));
+
+                        if (typeErrorField != null)
+                        {
+                            responseData = typeErrorField.Key.ToLowerInvariant() switch
+                            {
+                                "password" => ResponseMessages.PasswordInvalidFormat,
+                                "remember_me" => ResponseMessages.RememberMeInvalidFormat,
+                                _ => ResponseMessages.LoginIdInvalidFormat
+                            };
+                        }
+                        else
+                        {
+                            // Priority 2: Skip framework technical messages, prefer custom FluentValidation messages.
+                            // Special case: when a field has BOTH [TrimmedRequired] and [MinLength] errors (e.g. empty/whitespace-only
+                            // input fails TrimmedRequired but may also fail MinLength), prefer the TrimmedRequired message
+                            // to avoid showing redundant "required" + "min length" pairs.
+                            responseData = allErrorMessages
+                                .FirstOrDefault(m =>
+                                    !m.Contains("field is required", StringComparison.OrdinalIgnoreCase) &&
+                                    !m.Contains("request field is required", StringComparison.OrdinalIgnoreCase) &&
+                                    !m.Contains("could not be converted to", StringComparison.OrdinalIgnoreCase) &&
+                                    !m.Contains("JSON value could not be converted", StringComparison.OrdinalIgnoreCase) &&
+                                    !m.Contains("is required", StringComparison.OrdinalIgnoreCase))
+                                ?? allErrorMessages
+                                    .FirstOrDefault(m =>
+                                        m.Contains("vui lòng", StringComparison.OrdinalIgnoreCase) ||
+                                        m.Contains("please enter", StringComparison.OrdinalIgnoreCase))
+                                ?? allErrorMessages
+                                    .FirstOrDefault(m =>
+                                        m.Contains("at least", StringComparison.OrdinalIgnoreCase) ||
+                                        m.Contains("ít nhất", StringComparison.OrdinalIgnoreCase) ||
+                                        m.Contains("must be at least", StringComparison.OrdinalIgnoreCase))
+                                ?? ResponseMessages.ValidationError;
+                        }
+                    }
 
                     var response = new
                     {
                         RequestTrace = trace,
                         ResponseDateTime = DateTimeOffset.Now.ToString("yyyy-MM-dd'T'HH:mm:sszzz"),
-                        ResponseData = (object?)errors,
+                        ResponseData = responseData,
                         ResponseStatus = new
                         {
                             ResponseCode = ResponseCodes.ValidationError,
-                            ResponseMessage = "Validation failed. See responseData for details.",
+                            ResponseMessage = ResponseMessages.ValidationError,
                             TracingMessage = (string?)null
                         }
                     };

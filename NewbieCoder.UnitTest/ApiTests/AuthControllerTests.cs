@@ -428,6 +428,7 @@ public sealed class TestAuthService : IAuthService
         Task.FromResult(new RegisterResponse
         {
             AccessToken = "test-access",
+            RefreshToken = "test-refresh",
             TokenType = "Bearer",
             ExpiresIn = 900,
             Scope = "read write"

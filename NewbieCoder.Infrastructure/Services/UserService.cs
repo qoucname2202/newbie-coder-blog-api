@@ -8,6 +8,7 @@ using NewbieCoder.Core.Entities;
 using NewbieCoder.Core.Enums;
 using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.Interfaces.Services;
+using NewbieCoder.Core.Validation;
 using NewbieCoder.Core.ViewModels;
 using NewbieCoder.Infrastructure.Data;
 
@@ -324,10 +325,9 @@ public sealed class UserService : IUserService
     private static bool IsPasswordStrong(string password)
     {
         if (string.IsNullOrWhiteSpace(password)) return false;
-        if (!password.Any(char.IsUpper)) return false;
-        if (!password.Any(char.IsLower)) return false;
-        if (!password.Any(char.IsDigit)) return false;
-        if (!password.Any(c => !char.IsLetterOrDigit(c))) return false;
+        if (password.Length < PasswordStrengthAttribute.MinLength ||
+            password.Length > PasswordStrengthAttribute.MaxLength) return false;
+        if (CommonPasswords.IsBlocked(password)) return false;
         return true;
     }
 

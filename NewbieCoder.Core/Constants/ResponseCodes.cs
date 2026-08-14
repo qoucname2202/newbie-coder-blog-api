@@ -17,6 +17,7 @@ public static class ResponseCodes
 
     public const string SessionRevoked = "00000401S";
     public const string InternalError = "00000500";
+    public const string ServiceUnavailable = "00000503";
 
     // Password reset
     public const string InvalidEmailFormat = "00000201";
@@ -65,6 +66,8 @@ public static class ResponseCodes
     public const string UsernameAlreadyExists = "00020509";
     public const string UserAlreadyExists = "00020510";
     public const string CannotCreateAdminUser = "00020511";
+    public const string UserDeleted = "00020514";
+    public const string EmailNotVerified = "00020513";
     public const string UserCreateFailed = "00020512";
 
     // Role management
@@ -316,6 +319,8 @@ public static class ResponseCodes
         UsernameAlreadyExists => HttpStatusCodes.Conflict,
         UserUsernameAlreadyExists => HttpStatusCodes.Conflict,
         CannotCreateAdminUser => HttpStatusCodes.Forbidden,
+        UserDeleted => HttpStatusCodes.NotFound,
+        EmailNotVerified => HttpStatusCodes.Forbidden,
         UserCreateFailed => HttpStatusCodes.InternalServerError,
 
         // Role management (Create, Update, List)

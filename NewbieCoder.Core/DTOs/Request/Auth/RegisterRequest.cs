@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using NewbieCoder.Core.Converters;
+using NewbieCoder.Core.Validation;
 
 namespace NewbieCoder.Core.DTOs.Request.Auth;
 
@@ -8,39 +10,32 @@ namespace NewbieCoder.Core.DTOs.Request.Auth;
 /// </summary>
 public sealed class RegisterRequest
 {
-    [Required(ErrorMessage = "Email is required.")]
-    [EmailAddress(ErrorMessage = "Invalid email format.")]
-    [MaxLength(255, ErrorMessage = "Email must not exceed 255 characters.")]
+    [TrimmedEmail(ErrorMessage = "Email is not valid.")]
     [JsonPropertyName("email")]
     public string? Email { get; set; }
 
-    [Required(ErrorMessage = "Username is required.")]
-    [MinLength(3, ErrorMessage = "Username must be at least 3 characters.")]
-    [MaxLength(100, ErrorMessage = "Username must not exceed 100 characters.")]
-    [RegularExpression(@"^[a-z0-9_-]+$",
-        ErrorMessage = "Username may only contain lowercase letters, numbers, underscores, and hyphens.")]
+    [TrimmedRequired(ErrorMessage = "Username is required.")]
+    [Username(ErrorMessage = "Username invalid format.")]
     [JsonPropertyName("username")]
     public string? Username { get; set; }
 
-    [Required(ErrorMessage = "Password is required.")]
-    [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
-    [MaxLength(64, ErrorMessage = "Password must not exceed 64 characters.")]
+    [TrimmedRequired(ErrorMessage = "Password is required.")]
+    [PasswordStrength(ErrorMessage = "Password must be between 6 and 20 characters and contain only ASCII characters.")]
     [JsonPropertyName("password")]
     public string? Password { get; set; }
 
-    [Required(ErrorMessage = "Confirm password is required.")]
-    [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+    [TrimmedRequired(ErrorMessage = "Confirm password is required.")]
     [JsonPropertyName("confirmPassword")]
     public string? ConfirmPassword { get; set; }
 
-    [Required(ErrorMessage = "Full name is required.")]
-    [MinLength(2, ErrorMessage = "Full name must be at least 2 characters.")]
+    [TrimmedRequired(ErrorMessage = "Full name is required.")]
+    [MinLength(2, ErrorMessage = "Full name must be at least 2 characters after trimming whitespace.")]
     [MaxLength(150, ErrorMessage = "Full name must not exceed 150 characters.")]
-    [JsonPropertyName("FullName")]
+    [FullName(ErrorMessage = "Full name must not contain leading or trailing whitespace.")]
+    [JsonPropertyName("fullName")]
     public string? FullName { get; set; }
 
-    [Required(ErrorMessage = "You must accept the terms of service.")]
-    [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the terms of service.")]
+    [JsonConverter(typeof(NullableBoolConverter))]
     [JsonPropertyName("acceptTerms")]
-    public bool AcceptTerms { get; set; }
+    public bool? AcceptTerms { get; set; }
 }
