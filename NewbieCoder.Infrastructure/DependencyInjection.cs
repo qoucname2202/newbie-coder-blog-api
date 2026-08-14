@@ -21,7 +21,6 @@ public static class DependencyInjection
     {
         LoadEnvironmentVariables();
     }
-
     private static void LoadEnvironmentVariables()
     {
         if (_envLoaded) return;

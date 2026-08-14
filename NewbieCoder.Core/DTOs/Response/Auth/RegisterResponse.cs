@@ -10,6 +10,9 @@ public sealed class RegisterResponse
     [JsonPropertyName("access_token")]
     public required string AccessToken { get; init; }
 
+    [JsonPropertyName("refresh_token")]
+    public required string RefreshToken { get; init; }
+
     [JsonPropertyName("token_type")]
     public required string TokenType { get; init; }
 

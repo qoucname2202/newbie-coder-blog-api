@@ -12,6 +12,7 @@ using NewbieCoder.Core.Entities;
 using NewbieCoder.Core.Enums;
 using NewbieCoder.Core.Exceptions;
 using NewbieCoder.Core.Interfaces.Services;
+using NewbieCoder.Core.Validation;
 using NewbieCoder.Infrastructure.Data;
 
 namespace NewbieCoder.Infrastructure.Services;
@@ -62,8 +63,23 @@ public sealed partial class AuthService : IAuthService
     {
         ValidateLoginRequest(request);
 
+        // SECURITY: Block login_ids containing newline characters (injected via request body).
+        if (request.LoginId.Contains('\n') || request.LoginId.Contains('\r'))
+            throw new BusinessException(
+                ResponseMessages.LoginIdContainsNewline,
+                statusCode: HttpStatusCodes.BadRequest,
+                responseCode: ResponseCodes.ValidationError);
+
         // Normalize login_id: trim → lowercase; has '@' → email, otherwise username.
         var normalizedLoginId = NormalizeLoginId(request.LoginId!);
+
+        // SECURITY: Reject any normalized value that somehow still contains a newline
+        // (could happen if DB-stored value was written with raw SQL bypassing the setter).
+        if (normalizedLoginId.Contains('\n') || normalizedLoginId.Contains('\r'))
+            throw new BusinessException(
+                ResponseMessages.LoginIdContainsNewline,
+                statusCode: HttpStatusCodes.BadRequest,
+                responseCode: ResponseCodes.ValidationError);
         var isEmail = normalizedLoginId.Contains('@');
         ipAddress ??= "unknown";
 
@@ -85,15 +101,45 @@ public sealed partial class AuthService : IAuthService
 
             _rateLimit.RecordFailedAttempt(normalizedLoginId, ipAddress);
             AuthConstants.Helpers.ThrowInvalidCredentials();
-            return null!; 
+            return null!;
+        }
+
+        // SECURITY: Reject soft-deleted accounts before any other check.
+        if (user.DeletedAt != null)
+        {
+            await RecordFailedHistoryAsync(
+                user.Id, normalizedLoginId, null, null, ipAddress, userAgent,
+                AuthConstants.LoginHistoryConstants.ReasonBlockedUser, cancellationToken);
+            throw new BusinessException(
+                ResponseMessages.UserDeleted,
+                statusCode: HttpStatusCodes.NotFound,
+                responseCode: ResponseCodes.UserDeleted);
         }
 
         switch (user.Status)
         {
             case UserStatus.Active:
+                // Check email verification (Active users still need verified email).
+                if (!user.EmailVerified)
+                {
+                    await RecordFailedHistoryAsync(
+                        user.Id, normalizedLoginId, null, null, ipAddress, userAgent,
+                        AuthConstants.LoginHistoryConstants.ReasonBlockedUser, cancellationToken);
+                    throw new BusinessException(
+                        ResponseMessages.EmailNotVerified,
+                        statusCode: HttpStatusCodes.Forbidden,
+                        responseCode: ResponseCodes.EmailNotVerified);
+                }
                 break;
             case UserStatus.Locked:
-                // Admin lock has no expiry — record failed history and reject
+                // If lockout has an expiry and it has already passed, auto-unlock and allow login.
+                if (user.LockedUntil != null && user.LockedUntil <= DateTimeOffset.UtcNow)
+                {
+                    await UnlockUserAfterExpiryAsync(user.Id, cancellationToken);
+                    _rateLimit.ClearAttempts(normalizedLoginId, ipAddress);
+                    break;
+                }
+                // Admin lock (no expiry) or auto lockout still active — reject.
                 await RecordFailedHistoryAsync(
                     user.Id, normalizedLoginId, null, null, ipAddress, userAgent,
                     AuthConstants.LoginHistoryConstants.ReasonBlockedUser, cancellationToken);
@@ -132,13 +178,14 @@ public sealed partial class AuthService : IAuthService
             return null!;
         }
 
-        // Check device block status.
+        // Check device block status — reject blocked and revoked devices.
         var effectiveDeviceId = deviceId ?? Guid.NewGuid().ToString();
         var existingDevice = await _db.UserDevices
             .AsNoTracking()
             .FirstOrDefaultAsync(d => d.UserId == user.Id && d.DeviceId == effectiveDeviceId, cancellationToken);
 
-        if (existingDevice != null && existingDevice.Status == DeviceStatus.Blocked)
+        if (existingDevice != null &&
+            (existingDevice.Status == DeviceStatus.Blocked || existingDevice.Status == DeviceStatus.Revoked))
         {
             await RecordFailedHistoryAsync(
                 user.Id, normalizedLoginId, null, null, ipAddress, userAgent,
@@ -151,7 +198,8 @@ public sealed partial class AuthService : IAuthService
         long devicePk;
         long sessionPk;
         List<string> roles;
-        (devicePk, sessionPk, roles) = await ExecuteInTransactionAsync(async () =>
+        bool rememberMe;
+        (devicePk, sessionPk, roles, rememberMe) = await ExecuteInTransactionAsync(async () =>
         {
             //  Insert or update user_devices.
             long devicePk;
@@ -204,25 +252,26 @@ public sealed partial class AuthService : IAuthService
             await _db.SaveChangesAsync(cancellationToken);
             var sessionPk = session.Id;
 
-            // Create refresh token.
-            var refreshTokenPlain = AuthConstants.Helpers.GenerateSecureToken();
-            var refreshTokenHash = AuthConstants.Helpers.HashToken(refreshTokenPlain);
-            var refreshExpiry = request.RememberMe
-                ? DateTimeOffset.UtcNow.AddDays(AuthConstants.RefreshTokenExpirationDaysRememberMe)
-                : DateTimeOffset.UtcNow.AddDays(AuthConstants.RefreshTokenExpirationDaysDefault);
-
-            var refreshToken = new RefreshToken
+            // Create refresh token only when remember_me = true.
+            if (request.RememberMe)
             {
-                UserId = user.Id,
-                SessionId = sessionPk,
-                TokenHash = refreshTokenHash,
-                TokenFamily = Guid.NewGuid(),
-                Status = TokenStatus.Active,
-                IssuedAt = DateTimeOffset.UtcNow,
-                ExpiredAt = refreshExpiry
-            };
-            _db.RefreshTokens.Add(refreshToken);
-            await _db.SaveChangesAsync(cancellationToken);
+                var refreshTokenPlain = AuthConstants.Helpers.GenerateSecureToken();
+                var refreshTokenHash = AuthConstants.Helpers.HashToken(refreshTokenPlain);
+                var refreshExpiry = DateTimeOffset.UtcNow.AddDays(AuthConstants.RefreshTokenExpirationDaysRememberMe);
+
+                var refreshToken = new RefreshToken
+                {
+                    UserId = user.Id,
+                    SessionId = sessionPk,
+                    TokenHash = refreshTokenHash,
+                    TokenFamily = Guid.NewGuid(),
+                    Status = TokenStatus.Active,
+                    IssuedAt = DateTimeOffset.UtcNow,
+                    ExpiredAt = refreshExpiry
+                };
+                _db.RefreshTokens.Add(refreshToken);
+                await _db.SaveChangesAsync(cancellationToken);
+            }
 
             //  Load active roles.
             var roles = await LoadUserRolesAndPermissionsAsync(user.Id, cancellationToken);
@@ -246,7 +295,7 @@ public sealed partial class AuthService : IAuthService
             _db.LoginHistories.Add(history);
             await _db.SaveChangesAsync(cancellationToken);
 
-            return (devicePk, sessionPk, roles);
+            return (devicePk, sessionPk, roles, request.RememberMe);
         }, cancellationToken);
 
         //  Generate JWT (outside transaction — no DB dependency).
@@ -258,22 +307,32 @@ public sealed partial class AuthService : IAuthService
             sessionPk,
             devicePk);
 
-        var refreshTokenJwt = GenerateRefreshToken(
-            user.Id,
-            user.Email,
-            roles,
-            sessionPk,
-            devicePk);
+        // Generate refresh token only when remember_me = true.
+        string? refreshTokenJwt = null;
+        if (rememberMe)
+        {
+            refreshTokenJwt = GenerateRefreshToken(
+                user.Id,
+                user.Email,
+                roles,
+                sessionPk,
+                devicePk);
+        }
 
         // Step 14: Return tokens.
         _rateLimit.ClearAttempts(normalizedLoginId, ipAddress);
 
+        // Extend access token lifetime when remember_me = true.
+        var expiresIn = rememberMe
+            ? AuthConstants.AccessTokenExpirationSeconds * 4          // 60 minutes
+            : AuthConstants.AccessTokenExpirationSeconds;             // 15 minutes
+
         return new AuthTokenResponse
         {
             AccessToken = accessToken,
-            RefreshTokenJwt = refreshTokenJwt,
+            RefreshTokenJwt = refreshTokenJwt ?? string.Empty,
             TokenType = AuthConstants.TokenTypeBearer,
-            ExpiresIn = AuthConstants.AccessTokenExpirationSeconds
+            ExpiresIn = expiresIn
         };
     }
 
@@ -1053,6 +1112,7 @@ public sealed partial class AuthService : IAuthService
         return new RegisterResponse
         {
             AccessToken = accessToken,
+            RefreshToken = refreshTokenJwt,
             TokenType = AuthConstants.TokenTypeBearer,
             ExpiresIn = AuthConstants.AccessTokenExpirationSeconds,
             Scope = "read write"
@@ -1101,8 +1161,43 @@ public sealed partial class AuthService : IAuthService
                 statusCode: HttpStatusCodes.BadRequest,
                 responseCode: ResponseCodes.PasswordTooWeak);
 
-        // Terms acceptance.
-        if (!request.AcceptTerms)
+        // Password must not be the same as email.
+        if (string.Equals(request.Password, normalizedEmail, StringComparison.OrdinalIgnoreCase))
+            throw new BusinessException(
+                RegisterResponseMessages.PasswordEqualsEmail,
+                statusCode: HttpStatusCodes.BadRequest,
+                responseCode: ResponseCodes.PasswordTooWeak);
+
+        // Password and confirm password must match.
+        if (!string.Equals(request.Password, request.ConfirmPassword, StringComparison.Ordinal))
+            throw new BusinessException(
+                RegisterResponseMessages.PasswordNotMatch,
+                statusCode: HttpStatusCodes.BadRequest,
+                responseCode: ResponseCodes.PasswordNotMatch);
+
+        // Full name must contain only letters and spaces (no digits).
+        var sanitizedFullName = SanitizeFullName(request.FullName ?? string.Empty);
+        if (!System.Text.RegularExpressions.Regex.IsMatch(sanitizedFullName, @"^[\p{L} ]+$"))
+            throw new BusinessException(
+                "Full name must contain only letters and spaces.",
+                statusCode: HttpStatusCodes.BadRequest,
+                responseCode: ResponseCodes.ValidationError);
+
+        // Reject any HTML/JS injection payload in full name (check raw value before sanitization).
+        if (System.Text.RegularExpressions.Regex.IsMatch(request.FullName ?? string.Empty, @"<[^>]+>", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            throw new BusinessException(
+                "Full name must not contain HTML tags.",
+                statusCode: HttpStatusCodes.BadRequest,
+                responseCode: ResponseCodes.ValidationError);
+
+        // Terms acceptance — differentiate between missing and unchecked.
+        if (request.AcceptTerms == null)
+            throw new BusinessException(
+                RegisterResponseMessages.TermsRequired,
+                statusCode: HttpStatusCodes.BadRequest,
+                responseCode: ResponseCodes.ValidationError);
+
+        if (!request.AcceptTerms.Value)
             throw new BusinessException(
                 RegisterResponseMessages.TermsNotAccepted,
                 statusCode: HttpStatusCodes.BadRequest,
@@ -1139,30 +1234,49 @@ public sealed partial class AuthService : IAuthService
     private static bool IsPasswordStrong(string password, out string errorMessage)
     {
         errorMessage = string.Empty;
+
         if (string.IsNullOrWhiteSpace(password))
         {
             errorMessage = RegisterResponseMessages.PasswordTooWeak;
             return false;
         }
-        if (!password.Any(char.IsUpper))
+
+        // OWASP: length must be between 6 and 20 characters.
+        if (password.Length < PasswordStrengthAttribute.MinLength ||
+            password.Length > PasswordStrengthAttribute.MaxLength)
         {
             errorMessage = RegisterResponseMessages.PasswordTooWeak;
             return false;
         }
-        if (!password.Any(char.IsLower))
+
+        // Reject Unicode / non-ASCII characters — BCrypt computes hash from UTF-8 bytes,
+        // so multi-byte sequences (e.g. ê=2 bytes, ̂=2 bytes) cause hash mismatch on verify.
+        if (!IsAsciiPrintable(password))
+        {
+            errorMessage = RegisterResponseMessages.PasswordContainsUnicode;
+            return false;
+        }
+
+        // OWASP: reject common passwords.
+        if (CommonPasswords.IsBlocked(password))
         {
             errorMessage = RegisterResponseMessages.PasswordTooWeak;
             return false;
         }
-        if (!password.Any(char.IsDigit))
+
+        return true;
+    }
+
+    /// <summary>
+    /// Returns true when every character is a printable ASCII character (0x20–0x7E).
+    /// This safely rejects Unicode letters (e.g. ê, â, ô) and C0/C1 control codes.
+    /// </summary>
+    private static bool IsAsciiPrintable(string s)
+    {
+        foreach (var c in s)
         {
-            errorMessage = RegisterResponseMessages.PasswordTooWeak;
-            return false;
-        }
-        if (!password.Any(c => !char.IsLetterOrDigit(c)))
-        {
-            errorMessage = RegisterResponseMessages.PasswordTooWeak;
-            return false;
+            if (c < 0x20 || c > 0x7E)
+                return false;
         }
         return true;
     }
@@ -1321,6 +1435,23 @@ public sealed partial class AuthService : IAuthService
             roles.Add("GUEST");
 
         return roles;
+    }
+
+    /// <summary>
+    /// Auto-unlocks a user account after their lockout period has expired.
+    /// Sets status to Active and clears all lockout fields.
+    /// </summary>
+    private async Task UnlockUserAfterExpiryAsync(long userId, CancellationToken cancellationToken)
+    {
+        await _db.Users
+            .Where(u => u.Id == userId)
+            .ExecuteUpdateAsync(u => u
+                .SetProperty(p => p.Status, UserStatus.Active)
+                .SetProperty(p => p.LockedAt, (DateTimeOffset?)null)
+                .SetProperty(p => p.LockedUntil, (DateTimeOffset?)null)
+                .SetProperty(p => p.LockedReason, (string?)null)
+                .SetProperty(p => p.LockedBy, (long?)null),
+                cancellationToken);
     }
 
     #endregion

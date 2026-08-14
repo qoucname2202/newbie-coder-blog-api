@@ -4,6 +4,8 @@ public static class ResponseMessages
 {
     public const string Success = "Success";
     public const string InternalError = "An unexpected error occurred.";
+    public const string ServiceUnavailable = "Service is temporarily unavailable. Please try again later.";
+    public const string ServiceUnavailableReason = "The service is temporarily unavailable.";
     public const string TooManyRequests = "Too many requests. Please try again later.";
 
     // Authentication
@@ -13,13 +15,19 @@ public static class ResponseMessages
     public const string DeviceBlocked = "This device has been blocked from logging in.";
     public const string ValidationError = "Invalid login data.";
     public const string LoginIdRequired = "Please enter your email or username.";
+    public const string LoginIdContainsNewline = "Email or username must not contain line breaks.";
+    public const string LoginIdInvalidFormat = "Invalid format for 'login_id'. Expected a string.";
     public const string PasswordRequired = "Please enter your password.";
+    public const string PasswordInvalidFormat = "Invalid format for 'password'. Expected a string.";
+    public const string RememberMeInvalidFormat = "Invalid format for 'remember_me'. Expected a boolean.";
     public const string TooManyLoginAttempts = "Too many failed login attempts. Please try again after 15 minutes.";
     public const string LogoutSuccess = "Logged out successfully.";
     public const string SessionNotFound = "Session not found or has expired.";
     public const string SessionRevoked = "This session has been revoked.";
     public const string Unauthenticated = "Please log in to continue.";
     public const string UserNotFound = "Account does not exist.";
+    public const string UserDeleted = "This account has been deleted.";
+    public const string EmailNotVerified = "Please verify your email before logging in.";
 
     // User lockout
     public const string UserLocked           = "Your account has been locked.";
@@ -67,7 +75,7 @@ public static class ResponseMessages
     public const string InvalidEmailFormat = "Invalid email format.";
     public const string ResetTokenRequired = "Reset token is required.";
     public const string InvalidOrExpiredResetToken = "Password reset token is invalid or has expired.";
-    public const string PasswordTooWeak = "Password must be at least 8 characters, including uppercase, lowercase, number and special character.";
+    public const string PasswordTooWeak = "Password must be at least 6 characters, including uppercase, lowercase, number and special character.";
     public const string PasswordNotMatch = "Password confirmation does not match.";
     public const string PasswordReused = "New password must not be the same as the current password.";
     public const string TooManyResetRequests = "Too many password reset requests. Please try again later.";

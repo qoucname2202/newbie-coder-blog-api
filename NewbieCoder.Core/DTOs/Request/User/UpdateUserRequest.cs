@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using NewbieCoder.Core.Enums;
+using NewbieCoder.Core.Validation;
 
 namespace NewbieCoder.Core.DTOs.Request.User;
 
@@ -9,21 +10,18 @@ namespace NewbieCoder.Core.DTOs.Request.User;
 /// </summary>
 public sealed class UpdateUserRequest
 {
-    [Required(ErrorMessage = "Full name is required.")]
+    [TrimmedRequired(ErrorMessage = "Full name is required.")]
     [MinLength(2, ErrorMessage = "Full name must be at least 2 characters.")]
     [MaxLength(100, ErrorMessage = "Full name must not exceed 100 characters.")]
     [JsonPropertyName("fullName")]
     public string? FullName { get; set; }
 
-    [Required(ErrorMessage = "Username is required.")]
-    [MinLength(3, ErrorMessage = "Username must be at least 3 characters.")]
-    [MaxLength(50, ErrorMessage = "Username must not exceed 50 characters.")]
-    [RegularExpression(@"^[a-z0-9_-]+$",
-        ErrorMessage = "Username may only contain lowercase letters, numbers, underscores, and hyphens.")]
+    [TrimmedRequired(ErrorMessage = "Username is required.")]
+    [Username(ErrorMessage = "Username invalid format.")]
     [JsonPropertyName("username")]
     public string? Username { get; set; }
 
-    [Required(ErrorMessage = "Email is required.")]
+    [TrimmedRequired(ErrorMessage = "Email is required.")]
     [EmailAddress(ErrorMessage = "Invalid email format.")]
     [MaxLength(255, ErrorMessage = "Email must not exceed 255 characters.")]
     [JsonPropertyName("email")]

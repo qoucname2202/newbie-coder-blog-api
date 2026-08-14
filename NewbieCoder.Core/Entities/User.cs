@@ -32,6 +32,7 @@ namespace NewbieCoder.Core.Entities
 
         // Account lockout
         public DateTimeOffset? LockedAt { get; set; }
+        public DateTimeOffset? LockedUntil { get; set; }
         public string? LockedReason { get; set; }
         public long? LockedBy { get; set; }
 

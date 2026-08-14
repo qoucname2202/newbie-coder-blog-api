@@ -12,6 +12,7 @@ public static class ApplicationBuilderExtensions
         app.UseMiddleware<RequestTraceMiddleware>();
         app.UseRateLimiter();
         app.UseMiddleware<ExceptionHandlingMiddleware>();
+        app.UseMiddleware<HttpStatusResponseMiddleware>();
 
         // Serve uploaded files (avatars, etc.)
         app.UseStaticFiles(new StaticFileOptions

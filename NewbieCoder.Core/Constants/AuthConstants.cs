@@ -32,6 +32,9 @@ public static class AuthConstants
     public const int LoginIdMinLength = 3;
     public const int LoginIdMaxLength = 255;
 
+    // Auto lockout duration (e.g. after 5 failed login attempts)
+    public const int AutoLockoutDurationMinutes = 15;
+
     // Password reset
     public const int ResetTokenExpirationMinutes = 20;
     public const int ResetRequestMaxPerIpPer15Min = 5;

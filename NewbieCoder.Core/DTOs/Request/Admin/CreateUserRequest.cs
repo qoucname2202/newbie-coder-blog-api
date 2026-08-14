@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using NewbieCoder.Core.Validation;
 
 namespace NewbieCoder.Core.DTOs.Request.Admin;
 
@@ -8,27 +9,24 @@ namespace NewbieCoder.Core.DTOs.Request.Admin;
 /// </summary>
 public sealed class CreateUserRequest
 {
-    [Required(ErrorMessage = "Full name is required.")]
+    [TrimmedRequired(ErrorMessage = "Full name is required.")]
     [MaxLength(100, ErrorMessage = "Full name must not exceed 100 characters.")]
     [JsonPropertyName("fullName")]
     public string? FullName { get; set; }
 
-    [Required(ErrorMessage = "Username is required.")]
-    [MaxLength(50, ErrorMessage = "Username must not exceed 50 characters.")]
-    [RegularExpression(@"^[a-z0-9_-]+$",
-        ErrorMessage = "Username may only contain lowercase letters, numbers, underscores, and hyphens.")]
+    [TrimmedRequired(ErrorMessage = "Username is required.")]
+    [Username(ErrorMessage = "Username invalid format.")]
     [JsonPropertyName("username")]
     public string? Username { get; set; }
 
-    [Required(ErrorMessage = "Email is required.")]
+    [TrimmedRequired(ErrorMessage = "Email is required.")]
     [EmailAddress(ErrorMessage = "Invalid email format.")]
     [MaxLength(255, ErrorMessage = "Email must not exceed 255 characters.")]
     [JsonPropertyName("email")]
     public string? Email { get; set; }
 
-    [Required(ErrorMessage = "Password is required.")]
-    [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
-    [MaxLength(64, ErrorMessage = "Password must not exceed 64 characters.")]
+    [TrimmedRequired(ErrorMessage = "Password is required.")]
+    [PasswordStrength(ErrorMessage = "Password must be between 8 and 128 characters.")]
     [JsonPropertyName("password")]
     public string? Password { get; set; }
 
